@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>WhatsApp Wrapped - Upload</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+  <h1>WhatsApp Wrapped</h1>
+
+  <!-- big analyze button -->
+  <div style="margin-bottom:12px">
+    <a class="big-btn" href="/analyze">Analyze all uploaded chats</a>
+  </div>
+
+  <div class="card">
+    <div id="drop" class="drop">Drop a WhatsApp export .zip here, or click to choose a file</div>
+    <input id="fileinput" type="file" accept=".zip" />
+    <div style="margin-top:12px" class="controls">
+      <button id="uploadBtn" class="secondary" disabled>Upload</button>
+      <div style="flex:1">
+        <div class="progress" aria-hidden="true"><div id="bar" class="bar"></div></div>
+      </div>
+      <div id="status" style="min-width:160px;text-align:right;font-size:13px;color:#444"></div>
+    </div>
+    <div class="meta" id="meta"></div>
+  </div>
+
+  <div id="result" class="card" style="display:none">
+    <h3>Result</h3>
+    <div id="resultInfo"></div>
+    <div style="margin-top:10px">
+      <button id="downloadBtn" style="display:none">Download JSON</button>
+      <button id="resetBtn" class="secondary">Upload another</button>
+    </div>
+    <h4 style="margin-top:12px">Preview (first 20 messages)</h4>
+    <div id="preview" class="msg-preview"></div>
+    <h4 style="margin-top:12px">Full JSON</h4>
+    <pre id="fulljson"></pre>
+  </div>
+
+  <script>
+    const drop = document.getElementById('drop');
+    const fileinput = document.getElementById('fileinput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const bar = document.getElementById('bar');
+    const status = document.getElementById('status');
+    const meta = document.getElementById('meta');
+    const result = document.getElementById('result');
+    const preview = document.getElementById('preview');
+    const fulljson = document.getElementById('fulljson');
+    const resultInfo = document.getElementById('resultInfo');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    let currentFile = null;
+    let lastResponseText = null;
+    let lastFilename = 'chat.json';
+
+    function setFile(f){
+      currentFile = f;
+      uploadBtn.disabled = !f;
+      meta.textContent = f ? `${f.name} • ${(f.size/1024|0)} KB` : '';
+      status.textContent = '';
+      bar.style.width = '0%';
+    }
+
+    drop.addEventListener('click', ()=> fileinput.click());
+    drop.addEventListener('dragover', e=>{ e.preventDefault(); drop.classList.add('dragover'); });
+    drop.addEventListener('dragleave', ()=> drop.classList.remove('dragover'));
+    drop.addEventListener('drop', e=>{ e.preventDefault(); drop.classList.remove('dragover'); if(e.dataTransfer.files && e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); });
+
+    fileinput.addEventListener('change', ()=> setFile(fileinput.files[0]));
+    uploadBtn.addEventListener('click', ()=> {
+      if(!currentFile) return;
+      uploadFile(currentFile);
+    });
+
+    resetBtn.addEventListener('click', ()=> {
+      result.style.display = 'none';
+      fileinput.value = '';
+      setFile(null);
+    });
+
+    downloadBtn.addEventListener('click', ()=> {
+      if(!lastResponseText) return;
+      const blob = new Blob([lastResponseText], {type: 'application/json;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = lastFilename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    function uploadFile(file){
+      const xhr = new XMLHttpRequest();
+      const fd = new FormData();
+      fd.append('file', file);
+      xhr.open('POST', '/upload', true);
+
+      xhr.upload.onprogress = function(e){
+        if(e.lengthComputable){
+          const pct = Math.round(e.loaded / e.total * 100);
+          bar.style.width = pct + '%';
+          status.textContent = 'Uploading: ' + pct + '%';
+        }
+      };
+      xhr.onload = function(){
+        status.textContent = '';
+        bar.style.width = '100%';
+        if(xhr.status >= 200 && xhr.status < 300){
+          try{
+            const data = JSON.parse(xhr.responseText);
+            lastResponseText = xhr.responseText;
+            lastFilename = data.out_filename || ('whatsapp_' + (new Date()).toISOString().replace(/[:.]/g,'_') + '.json');
+            result.style.display = 'block';
+            resultInfo.innerHTML = `<strong>Saved as:</strong> ${data.out_filename ? data.out_filename : 'client download'} • <strong>Messages:</strong> ${data.messages_count}`;
+            // preview first 20 messages
+            preview.innerHTML = '';
+            (data.messages || []).slice(0,20).forEach(m=>{
+              const el = document.createElement('div');
+              const who = m.sender ? `<strong>${escapeHtml(m.sender)}</strong>` : '<em>system</em>';
+              const dt = m.datetime ? `<span style="color:#666;font-size:12px"> ${escapeHtml(m.datetime)}</span>` : '';
+              el.innerHTML = `${who}${dt}: ${escapeHtml(m.message)}`;
+              el.style.padding = '6px 0';
+              el.style.borderBottom = '1px solid #f1f1f1';
+              preview.appendChild(el);
+            });
+            fulljson.textContent = JSON.stringify(data, null, 2);
+            downloadBtn.style.display = 'inline-block';
+          }catch(err){
+            fulljson.textContent = xhr.responseText;
+          }
+        }else{
+          // try to parse json error
+          try{
+            const err = JSON.parse(xhr.responseText);
+            fulljson.textContent = JSON.stringify(err, null, 2);
+            result.style.display = 'block';
+            resultInfo.innerHTML = `<strong style="color:#b00">Error:</strong> ${escapeHtml(err.error || err.message || 'upload failed')}`;
+          }catch(e){
+            fulljson.textContent = xhr.responseText || 'Upload failed';
+            result.style.display = 'block';
+            resultInfo.innerHTML = `<strong style="color:#b00">Error:</strong> upload failed (status ${xhr.status})`;
+          }
+        }
+      };
+      xhr.onerror = function(){
+        status.textContent = 'Network error';
+      };
+      xhr.send(fd);
+    }
+
+    function escapeHtml(s){
+      if(s === null || s === undefined) return '';
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+    }
+  </script>
+</body>
+</html>
+

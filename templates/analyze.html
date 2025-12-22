@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Analyze - WhatsApp Wrapped</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+  <h1>Analyze uploaded chats</h1>
+  <div class="card">
+    <div class="search-row">
+      <input id="search" placeholder="Search username..." style="flex:1;padding:8px;border-radius:6px;border:1px solid #ddd">
+      <button id="refresh">Refresh</button>
+      <button id="analyzeBtn" disabled>Analyze</button>
+      <a href="/" style="margin-left:8px" class="small-muted">Back</a>
+    </div>
+
+    <!-- New: two selectors side-by-side -->
+    <div class="selectors">
+      <!-- left: username selector (unchanged behavior) -->
+      <div class="selector-col">
+        <div class="small-muted" style="margin-bottom:6px"><strong>Users</strong></div>
+        <div class="username-list" id="userList">Loading...</div>
+      </div>
+
+      <!-- right: year selector implemented like the username selector (multi-select) -->
+      <div class="selector-col">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div class="small-muted"><strong>Years</strong></div>
+          <div>
+            <button id="clearYears" title="Clear year selection" class="small-muted" style="background:none;border:0;cursor:pointer">Clear</button>
+          </div>
+        </div>
+        <div class="username-list" id="yearList">Loading...</div>
+        <div class="small-muted" style="margin-top:6px;font-size:12px">Click to toggle years (multi-select)</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="statsCard" class="card" style="display:none">
+    <h3>Stats for <span id="selUser"></span></h3>
+
+    <!-- Overview section (removed fastest-reply item) -->
+    <div class="stat-section" id="overview">
+      <h4>🔎 Overview</h4>
+      <div class="stat-item">💬 <strong>Total messages sent:</strong> <span id="sentCount"></span></div>
+      <div class="stat-item">📥 <strong>Total messages received:</strong> <span id="recvCount"></span></div>
+      <div class="stat-item">🗂️ <strong>Total chats participated in:</strong> <span id="chatsCount"></span></div>
+      <div class="stat-item">⏱️ <strong>Overall average reply (sec):</strong> <span id="avgReply"></span></div>
+    </div>
+
+    <!-- Activity section -->
+    <div class="stat-section" id="activity">
+      <h4>⚡ Activity</h4>
+      <div class="stat-item">📅 <strong>Active days:</strong> <span id="activeDays"></span></div>
+      <div class="stat-item">📊 <strong>Avg messages/day:</strong> <span id="avgPerDay"></span></div>
+    </div>
+
+    <!-- Messages section -->
+    <div class="stat-section" id="messages">
+      <h4>✉️ Messages</h4>
+      <div class="stat-item">📝 <strong>Longest message (chars):</strong> <span id="longestMsg"></span></div>
+      <div class="stat-item">✂️ <strong>Shortest message (chars):</strong> <span id="shortestMsg"></span></div>
+    </div>
+
+    <!-- Time section -->
+    <div class="stat-section" id="time">
+      <h4>⏰ Time</h4>
+      <div class="stat-item">🕒 <strong>Most active hour:</strong> <span id="activeHour"></span></div>
+      <div class="stat-item">📆 <strong>Most active weekday:</strong> <span id="activeWeekday"></span></div>
+    </div>
+
+    <!-- New Emoji & Voice section -->
+    <div class="stat-section" id="emojiVoice">
+      <h4>🎭 Emoji & Voice</h4>
+      <div class="stat-item">😊 <strong>Your emotional support emoji was:</strong> <span id="emotionalEmoji">n/a</span></div>
+      <div class="stat-item">🔢 <strong>Total emojis sent:</strong> <span id="totalEmojis">0</span></div>
+      <div class="stat-item">🏆 <strong>Top 5 emojis:</strong> <span id="topEmojis"></span></div>
+      <div class="stat-item">🎙️ <strong>Voice notes:</strong> <span id="voiceCount">0</span> notes • <span id="voiceHours">0.0</span> hours</div>
+    </div>
+
+    <!-- New Streaks & Peaks section -->
+    <div class="stat-section" id="streaks">
+      <h4>🔥 Streaks & Peaks</h4>
+      <div class="stat-item">🌙 <strong>Late-night messages (0–3):</strong> <span id="lateNightCount">0</span></div>
+      <div class="stat-item">🌅 <strong>Early-bird messages (4–6):</strong> <span id="earlyBirdCount">0</span></div>
+      <div class="stat-item">📈 <strong>Longest daily messaging streak:</strong> <span id="longestStreak">0</span> <em id="longestStreakRange"></em></div>
+      <div class="stat-item">📅 <strong>Busiest single day:</strong> <span id="busiestDay">n/a</span></div>
+      <div class="stat-item">⏱️ <strong>Busiest single hour:</strong> <span id="busiestHour">n/a</span></div>
+      <div class="stat-item">📊 <strong>Week you were most active:</strong> <span id="weekMost">n/a</span></div>
+      <div class="stat-item">📆 <strong>Month with most messages:</strong> <span id="monthMost">n/a</span></div>
+    </div>
+
+    <!-- New Conversation Insights section -->
+    <div class="stat-section" id="conversationInsights">
+      <h4>💡 Conversation Insights</h4>
+      <div class="stat-item">🗑️ <strong>Messages deleted:</strong> <span id="messagesDeleted">0</span></div>
+      <div class="stat-item">✏️ <strong>Messages edited:</strong> <span id="messagesEdited">0</span></div>
+      <div class="stat-item">☁️ <strong>Top words:</strong> <span id="topWords"></span></div>
+      <div class="stat-item">🔢 <strong>Total words sent:</strong> <span id="totalWords">0</span></div>
+    </div>
+
+    <!-- New Group Insights section -->
+    <div class="stat-section" id="groupInsights">
+      <h4>👥 Group Insights</h4>
+      <div class="stat-item">🏆 <strong>Group you messaged most:</strong> <span id="groupMostMsgs">n/a</span></div>
+      <div class="stat-item">🎭 <strong>Group with most emojis:</strong> <span id="groupMostEmojis">n/a</span></div>
+      <div class="stat-item">🤫 <strong>Longest silence you broke:</strong> <span id="groupLongestSilence">n/a</span></div>
+    </div>
+
+    <!-- Insert Word Cloud section (place before Conversation Insights) -->
+    <div class="stat-section" id="wordCloudSection">
+      <h4>☁️ Word Cloud</h4>
+      <!-- server-generated image -->
+      <div id="wordCloud" class="word-cloud" aria-hidden="false">
+        <img id="wordCloudImg" alt="word cloud" style="max-width:100%;height:auto;display:none" />
+      </div>
+      <div class="small-muted" style="margin-top:8px">Top words (text): <span id="topWordsInline"></span></div>
+    </div>
+
+    <h4 style="margin-top:12px">Top people sending messages</h4>
+    <div id="topSenders"></div>
+
+    <div style="margin-top:12px">
+      <button id="downloadStats">Download stats JSON</button>
+    </div>
+
+    <pre id="rawStats" style="margin-top:12px;max-height:360px;overflow:auto"></pre>
+  </div>
+
+<script>
+  // ...existing JS variables and helper functions ...
+  let usernames = [];
+  let filtered = [];
+  let selected = null;
+  const userList = document.getElementById('userList');
+  const yearList = document.getElementById('yearList');
+  const search = document.getElementById('search');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const refreshBtn = document.getElementById('refresh');
+  const selUserEl = document.getElementById('selUser');
+
+  // track selected years as a Set for multi-select
+  const selectedYears = new Set();
+
+  function loadUsernames(){
+    userList.textContent = 'Loading...';
+    fetch('/api/usernames').then(r=>r.json()).then(j=>{
+      usernames = j.usernames || [];
+      filtered = usernames.slice();
+      renderList();
+    }).catch(e=>{
+      userList.textContent = 'Failed to load usernames';
+    });
+  }
+
+  function renderList(){
+    if(filtered.length === 0){
+      userList.innerHTML = '<div class="small-muted">No usernames found</div>';
+      return;
+    }
+    userList.innerHTML = '';
+    filtered.forEach(n=>{
+      const div = document.createElement('div');
+      div.className = 'username-item';
+      div.textContent = n;
+      div.onclick = ()=> {
+        document.querySelectorAll('#userList .username-item').forEach(el=>el.style.background='');
+        div.style.background='#eef6ff';
+        selected = n;
+        analyzeBtn.disabled = false;
+      };
+      userList.appendChild(div);
+    });
+  }
+
+  search.addEventListener('input', ()=>{
+    const q = search.value.trim().toLowerCase();
+    filtered = usernames.filter(n => n.toLowerCase().includes(q));
+    renderList();
+  });
+
+  // populate yearList with clickable items (multi-select)
+  function loadYears(){
+    yearList.textContent = 'Loading...';
+    fetch('/api/years').then(r=>r.json()).then(j=>{
+      const years = j.years || [];
+      if(years.length === 0){
+        yearList.innerHTML = '<div class="small-muted">No years found</div>';
+        return;
+      }
+      yearList.innerHTML = '';
+      years.forEach(y=>{
+        const div = document.createElement('div');
+        div.className = 'username-item year-item';
+        div.textContent = y;
+        div.dataset.year = y;
+        div.onclick = ()=> {
+          const year = div.dataset.year;
+          if(selectedYears.has(year)){
+            selectedYears.delete(year);
+            div.style.background = '';
+          } else {
+            selectedYears.add(year);
+            div.style.background = '#eef6ff';
+          }
+        };
+        yearList.appendChild(div);
+      });
+    }).catch(e=>{
+      yearList.textContent = 'Failed to load years';
+    });
+  }
+
+  document.getElementById('clearYears').addEventListener('click', ()=>{
+    selectedYears.clear();
+    document.querySelectorAll('#yearList .year-item').forEach(el=>el.style.background='');
+  });
+
+  analyzeBtn.addEventListener('click', ()=>{
+    if(!selected) return;
+    selUserEl.textContent = selected;
+
+    const chosen = Array.from(selectedYears);
+    const params = new URLSearchParams();
+    params.set('user', selected);
+    if(chosen.length){
+      params.set('years', chosen.join(','));
+    }
+    fetch('/api/stats?' + params.toString()).then(r=>r.json()).then(j=>{
+      // Overview
+      document.getElementById('sentCount').textContent = j.total_messages_sent;
+      document.getElementById('recvCount').textContent = j.total_messages_received;
+      document.getElementById('chatsCount').textContent = j.total_chats_participated_in;
+
+      // Reply stats
+      document.getElementById('avgReply').textContent = j.overall_avg_reply_seconds ? (Math.round(j.overall_avg_reply_seconds)) + ' sec' : 'n/a';
+
+      // Activity
+      document.getElementById('activeDays').textContent = j.total_active_days;
+      document.getElementById('avgPerDay').textContent = Math.round((j.avg_messages_per_day||0)*100)/100;
+
+      // Messages
+      document.getElementById('longestMsg').textContent = j.longest_message_sent ? j.longest_message_sent.length + ' chars' : 'n/a';
+      document.getElementById('shortestMsg').textContent = j.shortest_message_sent ? j.shortest_message_sent.length + ' chars' : 'n/a';
+
+      // Time
+      document.getElementById('activeHour').textContent = j.most_active_hour !== null ? (j.most_active_hour + ':00') : 'n/a';
+      const weekdays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      document.getElementById('activeWeekday').textContent = j.most_active_day_of_week !== null ? weekdays[j.most_active_day_of_week] : 'n/a';
+
+      // Emoji & Voice population (existing)
+      const es = j.emoji_stats || {};
+      if(es.most_used){
+        document.getElementById('emotionalEmoji').textContent = `${es.most_used.emoji} ×${es.most_used.count}`;
+      } else {
+        document.getElementById('emotionalEmoji').textContent = 'n/a';
+      }
+      document.getElementById('totalEmojis').textContent = es.total_emojis || 0;
+      const topEl = document.getElementById('topEmojis');
+      topEl.textContent = (es.top_5 || []).map(e=> `${e.emoji}×${e.count}`).join(' ');
+
+      const vs = j.voice_stats || {};
+      const secs = vs.voice_total_seconds || 0;
+      const hours = Math.round((secs/3600)*10)/10;
+      document.getElementById('voiceCount').textContent = vs.voice_messages_count || 0;
+      document.getElementById('voiceHours').textContent = hours;
+
+      // Streaks & Peaks (existing)
+      document.getElementById('lateNightCount').textContent = j.late_night_messages_count ?? 0;
+      document.getElementById('earlyBirdCount').textContent = j.early_bird_messages_count ?? 0;
+
+      const ls = j.longest_daily_streak;
+      if(ls){
+        document.getElementById('longestStreak').textContent = ls.streak || 0;
+        const range = (ls.start ? ls.start : '') + (ls.end ? (' — ' + ls.end) : '');
+        document.getElementById('longestStreakRange').textContent = range;
+      } else {
+        document.getElementById('longestStreak').textContent = '0';
+        document.getElementById('longestStreakRange').textContent = '';
+      }
+
+      const bd = j.busiest_single_day;
+      document.getElementById('busiestDay').textContent = bd ? `${bd.date} (${bd.count})` : 'n/a';
+
+      const bh = j.busiest_single_hour;
+      document.getElementById('busiestHour').textContent = bh ? `${bh.hour}:00 (${bh.count})` : 'n/a';
+
+      const wm = j.week_most_active;
+      document.getElementById('weekMost').textContent = wm ? `${wm.week} (${wm.count})` : 'n/a';
+
+      const mm = j.month_with_most_messages;
+      document.getElementById('monthMost').textContent = mm ? `${mm.month} (${mm.count})` : 'n/a';
+
+      // Conversation Insights (new)
+      const del = j.messages_deleted ?? 0;
+      const edt = j.messages_edited ?? 0;
+      document.getElementById('messagesDeleted').textContent = del;
+      document.getElementById('messagesEdited').textContent = edt;
+
+      const ws = j.word_stats || {};
+      // attempt server-side image first; fallback to client-side using ws.top_words
+      requestWordCloudFromServer(selected, chosen, ws.top_words || []);
+      // keep the textual topWords element updated too
+      document.getElementById('topWords').textContent = (ws.top_words || []).slice(0,12).map(w=> `${w.word}×${w.count}`).join(', ');
+      document.getElementById('totalWords').textContent = ws.total_words || 0;
+
+      // Group Insights (new)
+      const gm = j.group_most_messages;
+      document.getElementById('groupMostMsgs').textContent = gm ? `${gm.chat} (${gm.count})` : 'n/a';
+      const ge = j.group_most_emojis;
+      document.getElementById('groupMostEmojis').textContent = ge ? `${ge.chat} (${ge.count})` : 'n/a';
+      const gl = j.group_longest_silence_broken_by_user;
+      document.getElementById('groupLongestSilence').textContent = gl ? `${gl.chat} • ${formatDuration(gl.seconds)} (since ${gl.start?gl.start.split('T')[0]:''})` : 'n/a';
+
+      // top contacts (existing)
+      const topEl2 = document.getElementById('topSenders');
+      topEl2.innerHTML = '';
+      (j.top_senders || []).slice(0,20).forEach(t=>{
+        const r = document.createElement('div');
+        r.textContent = `${t.name}: ${t.count}`;
+        topEl2.appendChild(r);
+      });
+
+      document.getElementById('rawStats').textContent = JSON.stringify(j, null, 2);
+      document.getElementById('statsCard').style.display = 'block';
+    }).catch(e=>{
+      alert('Failed to compute stats');
+    });
+  });
+
+  refreshBtn.addEventListener('click', ()=> { loadUsernames(); loadYears(); });
+  document.getElementById('downloadStats').addEventListener('click', ()=>{
+    const text = document.getElementById('rawStats').textContent;
+    if(!text) return;
+    const blob = new Blob([text], {type: 'application/json;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `stats_${(new Date()).toISOString().replace(/[:.]/g,'_')}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  function formatDuration(seconds){
+    if(!seconds || seconds <= 0) return '0s';
+    if(seconds >= 3600) return (Math.round((seconds/3600)*10)/10) + 'h';
+    if(seconds >= 60) return Math.round(seconds/60) + 'm';
+    return Math.round(seconds) + 's';
+  }
+
+  // request server-side word cloud; fallbackTopWords used if image generation/fetch fails
+  function requestWordCloudFromServer(user, yearsArray, fallbackTopWords){
+    const params = new URLSearchParams();
+    params.set('user', user);
+    if(yearsArray && yearsArray.length) params.set('years', yearsArray.join(','));
+    const imgEl = document.getElementById('wordCloudImg');
+    // hide img while loading
+    imgEl.style.display = 'none';
+    fetch('/api/wordcloud.png?' + params.toString()).then(r=>{
+      if(!r.ok) throw r;
+      return r.blob();
+    }).then(blob=>{
+      const url = URL.createObjectURL(blob);
+      // revoke previous src if any
+      if(imgEl._currentUrl) URL.revokeObjectURL(imgEl._currentUrl);
+      imgEl._currentUrl = url;
+      imgEl.src = url;
+      imgEl.style.display = 'block';
+    }).catch(err=>{
+      // fallback to client-side rendering using fallbackTopWords
+      // clear any img
+      imgEl.style.display = 'none';
+      // use previous client-side render function (keeps behavior)
+      renderWordCloudFallback(fallbackTopWords || []);
+    });
+  }
+
+  // keep an inline fallback renderer for cases where server image is not available
+  function renderWordCloudFallback(topWords){
+    const area = document.getElementById('wordCloud');
+    // remove any existing img display (we hide image in caller)
+    // render spans as before
+    // clear previous non-img children
+    Array.from(area.querySelectorAll('.wc-word')).forEach(n=>n.remove());
+    if(!topWords || topWords.length===0){
+      // place a simple text node
+      const t = document.createElement('div');
+      t.className = 'small-muted';
+      t.textContent = 'No words available';
+      area.appendChild(t);
+      document.getElementById('topWordsInline').textContent = '';
+      return;
+    }
+    const counts = topWords.map(w=>w.count);
+    const minC = Math.min(...counts), maxC = Math.max(...counts);
+    const minSize = 14, maxSize = 42;
+    function sizeForCount(c){
+      if(maxC === minC) return (minSize+maxSize)/2;
+      return Math.round(minSize + (c - minC) / (maxC - minC) * (maxSize - minSize));
+    }
+    topWords.forEach(w=>{
+      const sp = document.createElement('span');
+      sp.className = 'wc-word';
+      sp.textContent = w.word;
+      sp.title = `${w.word} ×${w.count}`;
+      sp.style.fontSize = sizeForCount(w.count) + 'px';
+      sp.style.margin = '6px';
+      sp.style.display = 'inline-block';
+      area.appendChild(sp);
+    });
+    document.getElementById('topWordsInline').textContent = topWords.slice(0,12).map(w=>`${w.word}×${w.count}`).join(', ');
+  }
+
+  // initial load
+  loadUsernames();
+  loadYears();
+</script>
+</body>
+</html>
+
