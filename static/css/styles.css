@@ -51,3 +51,62 @@ pre{white-space:pre-wrap;background:#f8f9fa;padding:12px;border-radius:6px;overf
 .word-cloud{padding:10px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;min-height:60px}
 .wc-word{color:#1a1a1a;line-height:1;transition:transform .12s ease}
 .wc-word:hover{transform:translateY(-2px);color:#0056d6}
+
+/* theme toggle style */
+.theme-toggle{
+  border: 0;
+  background: transparent;
+  font-size:18px;
+  cursor:pointer;
+  padding:6px 8px;
+  border-radius:8px;
+}
+
+/* dark mode overrides */
+.dark body, .dark .card, .dark .msg-preview, .dark .username-list, .dark .word-cloud, .dark pre {
+  /* scope selectors below rely on html.documentElement having .dark */
+}
+
+/* apply global dark variables */
+:root {
+  --bg: #ffffff;
+  --text: #111111;
+  --muted: #666666;
+  --card-bg: #ffffff;
+  --border: #e6e6e6;
+  --accent: #007bff;
+  --muted-2: #f8f9fa;
+  --drop-border: #cfcfcf;
+  --drop-bg: transparent;
+}
+
+.dark {
+  --bg: #0f1720;
+  --text: #e6eef8;
+  --muted: #9fb0c7;
+  --card-bg: #0b1220;
+  --border: #1f2a36;
+  --accent: #4aa3ff;
+  --muted-2: #071017;
+  --drop-border: #274155;
+  --drop-bg: rgba(255,255,255,0.02);
+}
+
+/* apply variables where possible (light rules remain as before, but these ensure many areas switch) */
+body{background:var(--bg);color:var(--text)}
+.card{background:var(--card-bg);border:1px solid var(--border)}
+.msg-preview{background:var(--card-bg);border-color:var(--border)}
+.username-list{background:var(--card-bg);border-color:var(--border)}
+.word-cloud{background:var(--card-bg);border-color:var(--border)}
+pre{background:var(--muted-2);color:var(--text);border:1px solid var(--border)}
+
+.drop{border:2px dashed var(--drop-border);background:var(--drop-bg);color:var(--muted)}
+.drop.dragover{border-color:var(--accent);background:rgba(10,90,200,0.06);color:var(--text)}
+
+button{background:var(--accent);color:#fff}
+button.secondary{background:#6c757d;color:#fff}
+.bar{background:var(--accent)}
+
+/* small tweak for toggle contrast in dark */
+.dark .theme-toggle{background:rgba(255,255,255,0.04);color:var(--text)}
+.theme-toggle:focus{outline:2px solid rgba(0,123,255,0.18);outline-offset:2px}

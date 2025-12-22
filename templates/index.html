@@ -7,7 +7,11 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-  <h1>WhatsApp Wrapped</h1>
+  <!-- header with theme toggle -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <h1 style="margin:0">WhatsApp Wrapped</h1>
+    <button id="themeToggle" class="theme-toggle" title="Toggle dark / light">🌙</button>
+  </div>
 
   <!-- big analyze button -->
   <div style="margin-bottom:12px">
@@ -159,6 +163,37 @@
       if(s === null || s === undefined) return '';
       return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
     }
+  </script>
+
+  <script>
+    // filepath: C:\Users\noam2\Documents\Src\whatsapp_wrapped\templates\index.html (theme snippet)
+    (function(){
+      const key = 'wh_wrapped_theme';
+      const btn = document.getElementById('themeToggle');
+      function applyTheme(theme){
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+        btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+      }
+      function getStored(){
+        try { return localStorage.getItem(key) || null } catch(e){ return null }
+      }
+      function setStored(v){
+        try { localStorage.setItem(key, v) } catch(e){}
+      }
+      // init
+      const stored = getStored();
+      if(stored) applyTheme(stored);
+      else {
+        // respect prefers-color-scheme as default
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        applyTheme(prefersDark ? 'dark' : 'light');
+      }
+      btn.addEventListener('click', ()=>{
+        const now = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+        applyTheme(now);
+        setStored(now);
+      });
+    })();
   </script>
 </body>
 </html>
