@@ -97,7 +97,7 @@
             </div>
         </div>
 
-         <!-- Slide 3: The Ratio (New) -->
+         <!-- Slide 3: The Ratio -->
          <div class="slide" id="slide-3">
             <div class="slide-header">The Vibe</div>
             <div class="slide-body">
@@ -112,7 +112,7 @@
             </div>
         </div>
 
-        <!-- Slide 4: Timeline (New) -->
+        <!-- Slide 4: Timeline -->
         <div class="slide" id="slide-4">
             <div class="slide-header">Your Year</div>
             <div class="slide-body">
@@ -124,7 +124,7 @@
             </div>
         </div>
 
-        <!-- Slide 5: Daily Rhythm (New) -->
+        <!-- Slide 5: Daily Rhythm -->
         <div class="slide" id="slide-5">
             <div class="slide-header">Daily Rhythm</div>
             <div class="slide-body">
@@ -136,8 +136,59 @@
             </div>
         </div>
 
-        <!-- Slide 6: Habits -->
+        <!-- Slide 6: The Spark (New) -->
         <div class="slide" id="slide-6">
+            <div class="slide-header">The Spark</div>
+            <div class="slide-body">
+                <h2 class="headline" id="sparkHeadline">You broke the silence.</h2>
+                <div class="big-stat">
+                    <span id="convStarts" class="highlight">0</span>
+                    <span class="label">Conversations Started</span>
+                </div>
+                <div class="stat-box mt-4">
+                    <p>That's how many times you messaged first after a long silence.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Texting Style (New) -->
+        <div class="slide" id="slide-7">
+            <div class="slide-header">Texting Style</div>
+            <div class="slide-body">
+                <h2 class="headline" id="styleHeadline">Short & Sweet.</h2>
+                <div class="grid-stats">
+                    <div class="grid-item">
+                        <span id="avgMsgLen" class="number">0</span>
+                        <span class="sub">Words / Msg</span>
+                    </div>
+                    <div class="grid-item">
+                        <span id="doubleTextCount" class="number">0</span>
+                        <span class="sub">Double Texts</span>
+                    </div>
+                </div>
+                <div class="stat-row mt-4">
+                    <span id="tripleTextLabel">And yes, you triple-texted <strong>0</strong> times.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: The Vibe / Laughter (New) -->
+        <div class="slide" id="slide-8">
+            <div class="slide-header">The Vibe</div>
+            <div class="slide-body">
+                <h2 class="headline">Good vibes only?</h2>
+                <div class="big-stat">
+                    <span id="laughCount" class="highlight">0</span>
+                    <span class="label">Laughs Sent</span>
+                </div>
+                <div class="stat-row">
+                    You asked <strong id="questionsCount">0</strong> questions (<span id="questionsPct">0</span>% of your messages).
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: Habits -->
+        <div class="slide" id="slide-9">
             <div class="slide-header">Habits</div>
             <div class="slide-body">
                 <h2 class="headline">Consistency is key.</h2>
@@ -158,8 +209,8 @@
             </div>
         </div>
 
-        <!-- Slide 7: Emojis -->
-        <div class="slide" id="slide-7">
+        <!-- Slide 10: Emojis -->
+        <div class="slide" id="slide-10">
             <div class="slide-header">Expressions</div>
             <div class="slide-body centered">
                 <h2 class="headline">Your emotional support emoji</h2>
@@ -173,8 +224,8 @@
             </div>
         </div>
 
-        <!-- Slide 8: Streaks -->
-        <div class="slide" id="slide-8">
+        <!-- Slide 11: Streaks -->
+        <div class="slide" id="slide-11">
             <div class="slide-header">Streaks & Peaks</div>
             <div class="slide-body">
                 <h2 class="headline">You couldn't stop talking!</h2>
@@ -190,8 +241,8 @@
             </div>
         </div>
 
-         <!-- Slide 9: Words -->
-         <div class="slide" id="slide-9">
+         <!-- Slide 12: Words -->
+         <div class="slide" id="slide-12">
             <div class="slide-header">Vocabulary</div>
             <div class="slide-body">
                 <h2 class="headline">What you talked about</h2>
@@ -202,8 +253,8 @@
             </div>
         </div>
 
-        <!-- Slide 10: Groups & Friends -->
-        <div class="slide" id="slide-10">
+        <!-- Slide 13: Groups & Friends -->
+        <div class="slide" id="slide-13">
             <div class="slide-header">The Crew</div>
             <div class="slide-body">
                 <h2 class="headline">Squad Goals</h2>
@@ -219,8 +270,8 @@
             </div>
         </div>
 
-        <!-- Slide 11: Summary -->
-        <div class="slide" id="slide-11">
+        <!-- Slide 14: Summary -->
+        <div class="slide" id="slide-14">
             <div class="slide-body centered">
                 <h1 class="animate-pop">That's a wrap!</h1>
                 <p>See you next year?</p>
@@ -235,6 +286,9 @@
     <!-- Progress Bars -->
     <div class="progress-container">
         <div class="progress-bar active"></div>
+        <div class="progress-bar"></div>
+        <div class="progress-bar"></div>
+        <div class="progress-bar"></div>
         <div class="progress-bar"></div>
         <div class="progress-bar"></div>
         <div class="progress-bar"></div>
@@ -448,6 +502,22 @@
           wrap.appendChild(bar);
           hChart.appendChild(wrap);
       }
+
+      // Advanced Stats (The Spark, Style, Vibe)
+      document.getElementById('convStarts').textContent = j.conversation_starts || 0;
+      document.getElementById('sparkHeadline').textContent = (j.conversation_starts > 20) ? "You broke the silence." : "You kept it cool.";
+
+      const avgLen = j.avg_msg_length || 0;
+      document.getElementById('avgMsgLen').textContent = avgLen;
+      document.getElementById('styleHeadline').textContent = (avgLen > 10) ? "The Novelist." : "Short & Sweet.";
+
+      const doubleTxt = j.double_texting || {};
+      document.getElementById('doubleTextCount').textContent = doubleTxt['2'] || 0;
+      document.getElementById('tripleTextLabel').innerHTML = `And yes, you triple-texted <strong>${doubleTxt['3'] || 0}</strong> times.`;
+
+      document.getElementById('laughCount').textContent = j.laughter_count || 0;
+      document.getElementById('questionsCount').textContent = j.questions_count || 0;
+      document.getElementById('questionsPct').textContent = j.questions_pct || 0;
 
       // Reply stats
       document.getElementById('avgReply').textContent = j.overall_avg_reply_seconds ? (Math.round(j.overall_avg_reply_seconds)) + ' sec' : 'n/a';
