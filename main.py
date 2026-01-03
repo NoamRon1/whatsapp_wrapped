@@ -108,23 +108,45 @@ def _try_parse_datetime(s: str):
     except Exception:
         return None
 
+# Profile Management Helpers
+PROFILES_FILE = Path("profiles.json")
+
+def load_profiles():
+    if not PROFILES_FILE.exists():
+        return {}
+    try:
+        return json.loads(PROFILES_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+def save_profiles(profiles):
+    PROFILES_FILE.write_text(json.dumps(profiles, ensure_ascii=False, indent=2), encoding="utf-8")
+
 # new helper: load all messages from chats/*.json and merge them
 def _load_all_messages():
     chats_dir = Path("chats")
     msgs = []
     if not chats_dir.exists():
         return msgs
+
+    profiles = load_profiles()
+
     for p in sorted(chats_dir.glob("*.json")):
         try:
             data = json.loads(p.read_text(encoding="utf-8"))
             for m in data.get("messages", []):
                 dt_raw = m.get("datetime")
                 dt_parsed = _try_parse_datetime(dt_raw)
+
+                # Apply profile mapping to sender
+                original_sender = m.get("sender")
+                mapped_sender = profiles.get(original_sender, original_sender)
+
                 msgs.append({
                     "datetime_raw": dt_raw,
                     "datetime": dt_parsed.isoformat() if dt_parsed else None,
                     "_dt_obj": dt_parsed,
-                    "sender": m.get("sender"),
+                    "sender": mapped_sender,
                     "message": m.get("message"),
                     "source_file": data.get("source_file"),
                 })
@@ -441,6 +463,35 @@ def index():
 @app.route("/analyze", methods=["GET"])
 def analyze_page():
     return render_template("analyze.html")
+
+@app.route("/profiles", methods=["GET"])
+def profiles_page():
+    return render_template("profiles.html")
+
+@app.route("/api/profiles_config", methods=["GET", "POST"])
+def api_profiles_config():
+    if request.method == "GET":
+        return jsonify(load_profiles())
+    else:
+        new_profiles = request.json
+        save_profiles(new_profiles)
+        return jsonify({"status": "saved"})
+
+@app.route("/api/raw_users", methods=["GET"])
+def api_raw_users():
+    # Load raw messages without mapping to find all original names
+    chats_dir = Path("chats")
+    raw_senders = set()
+    if chats_dir.exists():
+        for p in sorted(chats_dir.glob("*.json")):
+            try:
+                data = json.loads(p.read_text(encoding="utf-8"))
+                for m in data.get("messages", []):
+                    if m.get("sender"):
+                        raw_senders.add(m.get("sender"))
+            except:
+                pass
+    return jsonify({"raw_users": sorted(list(raw_senders))})
 
 @app.route("/upload", methods=["POST"])
 def upload():

@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Manage Profiles - WhatsApp Wrapped</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+
+  <div class="container">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+        <h1 style="margin:0;font-size:2rem;font-weight:800;background:-webkit-linear-gradient(45deg,#0b74ff,#d6249f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Profile Manager</h1>
+        <div style="display:flex;gap:12px;align-items:center">
+            <a href="/" class="small-muted">Home</a>
+            <a href="/analyze" class="small-muted">Analyze</a>
+            <button id="themeToggle" class="theme-toggle" title="Toggle dark / light">🌙</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="welcome-box">
+            <h2 style="margin:0 0 8px 0">Clean up your contacts</h2>
+            <p style="margin:0;opacity:0.7">Rename users or merge multiple aliases (like "Mom" and "+12345") into a single profile.</p>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+            <button id="saveBtn" class="big-btn">Save Changes</button>
+        </div>
+
+        <div class="pm-grid">
+            <div class="pm-col">
+                <h4 class="pm-header">Detected Names <span class="badge" id="rawCount">0</span></h4>
+                <div class="search-row-modern small">
+                    <input id="searchRaw" placeholder="Filter names..." class="modern-input">
+                </div>
+                <div id="rawList" class="pm-list"></div>
+            </div>
+
+            <div class="pm-col">
+                <h4 class="pm-header">Active Profiles <span class="badge" id="profileCount">0</span></h4>
+                <div class="search-row-modern small">
+                    <input id="searchProfile" placeholder="Filter profiles..." class="modern-input">
+                </div>
+                <div id="profileList" class="pm-list"></div>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <!-- Edit/Merge Modal -->
+  <div id="editModal" class="modal" style="display:none">
+      <div class="modal-content">
+          <h3>Edit Profile</h3>
+          <p>Assign <strong><span id="targetCount">0</span></strong> raw name(s) to a profile.</p>
+          <div style="margin-bottom:16px">
+              <label style="display:block;margin-bottom:4px;font-weight:600">Profile Name</label>
+              <input id="profileNameInput" class="modern-input" style="width:100%">
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+              <button class="secondary" onclick="closeModal()">Cancel</button>
+              <button onclick="applyMerge()">Apply</button>
+          </div>
+      </div>
+  </div>
+
+<script>
+    let rawUsers = [];
+    let currentProfiles = {}; // raw -> target
+
+    // Derived state
+    let uniqueProfiles = new Set();
+    let profileToRaw = {}; // target -> [raw, raw]
+
+    const rawListEl = document.getElementById('rawList');
+    const profileListEl = document.getElementById('profileList');
+    const saveBtn = document.getElementById('saveBtn');
+
+    // Selection state
+    let selectedRaw = new Set();
+
+    async function loadData() {
+        const [r1, r2] = await Promise.all([
+            fetch('/api/raw_users').then(r => r.json()),
+            fetch('/api/profiles_config').then(r => r.json())
+        ]);
+        rawUsers = r1.raw_users || [];
+        currentProfiles = r2 || {};
+        recalc();
+        render();
+    }
+
+    function recalc() {
+        uniqueProfiles = new Set();
+        profileToRaw = {};
+
+        // identifying all target profiles
+        rawUsers.forEach(r => {
+            const target = currentProfiles[r] || r;
+            uniqueProfiles.add(target);
+            if(!profileToRaw[target]) profileToRaw[target] = [];
+            profileToRaw[target].push(r);
+        });
+
+        document.getElementById('rawCount').textContent = rawUsers.length;
+        document.getElementById('profileCount').textContent = uniqueProfiles.size;
+    }
+
+    function render() {
+        renderRaw();
+        renderProfiles();
+    }
+
+    function renderRaw() {
+        const filter = document.getElementById('searchRaw').value.toLowerCase();
+        rawListEl.innerHTML = '';
+
+        rawUsers.forEach(r => {
+            if(filter && !r.toLowerCase().includes(filter)) return;
+
+            const div = document.createElement('div');
+            div.className = 'pm-item ' + (selectedRaw.has(r) ? 'selected' : '');
+
+            // Checkbox
+            const check = document.createElement('input');
+            check.type = 'checkbox';
+            check.checked = selectedRaw.has(r);
+            check.onclick = (e) => {
+                e.stopPropagation();
+                toggleSelect(r);
+            };
+
+            // Text
+            const span = document.createElement('span');
+            span.textContent = r;
+            const target = currentProfiles[r];
+            if(target) {
+                const badge = document.createElement('span');
+                badge.className = 'mapped-badge';
+                badge.textContent = `→ ${target}`;
+                span.appendChild(badge);
+            }
+
+            div.appendChild(check);
+            div.appendChild(span);
+            div.onclick = () => toggleSelect(r);
+
+            rawListEl.appendChild(div);
+        });
+
+        // Show floating action if selection
+        if(selectedRaw.size > 0) {
+            // Ensure bulk action button exists?
+            // For now we just use the selected state to enable a "Merge Selected" button in the header?
+            // Let's add a button dynamically or keep it simple.
+            showBulkAction();
+        } else {
+            hideBulkAction();
+        }
+    }
+
+    let bulkBtn = null;
+    function showBulkAction() {
+        if(!bulkBtn) {
+            bulkBtn = document.createElement('button');
+            bulkBtn.textContent = `Merge ${selectedRaw.size} items`;
+            bulkBtn.className = 'floating-action';
+            bulkBtn.onclick = openMergeModal;
+            document.body.appendChild(bulkBtn);
+        }
+        bulkBtn.textContent = `Merge ${selectedRaw.size} items`;
+        bulkBtn.style.display = 'block';
+    }
+    function hideBulkAction() {
+        if(bulkBtn) bulkBtn.style.display = 'none';
+    }
+
+    function toggleSelect(r) {
+        if(selectedRaw.has(r)) selectedRaw.delete(r);
+        else selectedRaw.add(r);
+        renderRaw();
+    }
+
+    function renderProfiles() {
+        const filter = document.getElementById('searchProfile').value.toLowerCase();
+        profileListEl.innerHTML = '';
+
+        Array.from(uniqueProfiles).sort().forEach(p => {
+            if(filter && !p.toLowerCase().includes(filter)) return;
+
+            const div = document.createElement('div');
+            div.className = 'pm-item profile-item';
+
+            const info = document.createElement('div');
+            const raws = profileToRaw[p] || [];
+            info.innerHTML = `<strong>${p}</strong> <span class="small-muted">(${raws.length} aliases)</span>`;
+
+            const editBtn = document.createElement('button');
+            editBtn.textContent = '✏️';
+            editBtn.className = 'icon-only';
+            editBtn.onclick = () => openEditProfile(p);
+
+            div.appendChild(info);
+            div.appendChild(editBtn);
+            profileListEl.appendChild(div);
+        });
+    }
+
+    // Modal Logic
+    const modal = document.getElementById('editModal');
+    const nameInput = document.getElementById('profileNameInput');
+    let pendingMerge = [];
+
+    function openMergeModal() {
+        pendingMerge = Array.from(selectedRaw);
+        if(pendingMerge.length === 0) return;
+
+        // Default name suggestion: most frequent target or first raw
+        // Simplified: just first raw
+        nameInput.value = pendingMerge[0];
+        document.getElementById('targetCount').textContent = pendingMerge.length;
+
+        modal.style.display = 'flex';
+    }
+
+    function openEditProfile(profileName) {
+        // Find all raw names currently mapped to this profile
+        pendingMerge = profileToRaw[profileName] || [];
+        nameInput.value = profileName;
+        document.getElementById('targetCount').textContent = pendingMerge.length;
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+        modal.style.display = 'none';
+    }
+
+    function applyMerge() {
+        const newName = nameInput.value.trim();
+        if(!newName) return;
+
+        pendingMerge.forEach(raw => {
+            if(raw === newName) {
+                // If mapping strictly to itself, remove from config (optimization)
+                delete currentProfiles[raw];
+            } else {
+                currentProfiles[raw] = newName;
+            }
+        });
+
+        selectedRaw.clear();
+        closeModal();
+        hideBulkAction();
+        recalc();
+        render();
+    }
+
+    saveBtn.onclick = () => {
+        saveBtn.textContent = "Saving...";
+        fetch('/api/profiles_config', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(currentProfiles)
+        }).then(r => r.json()).then(() => {
+            saveBtn.textContent = "Save Changes";
+            // alert('Saved!');
+        }).catch(e => {
+            alert('Error saving');
+            saveBtn.textContent = "Save Changes";
+        });
+    };
+
+    document.getElementById('searchRaw').addEventListener('input', renderRaw);
+    document.getElementById('searchProfile').addEventListener('input', renderProfiles);
+
+    // Initial load
+    loadData();
+
+    // Theme logic (reused)
+    (function(){
+      const key = 'wh_wrapped_theme';
+      const btn = document.getElementById('themeToggle');
+      function applyTheme(theme){
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+        btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+      }
+      function getStored(){
+        try { return localStorage.getItem(key) || null } catch(e){ return null }
+      }
+      function setStored(v){
+        try { localStorage.setItem(key, v) } catch(e){}
+      }
+      const stored = getStored();
+      if(stored) applyTheme(stored);
+      else {
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        applyTheme(prefersDark ? 'dark' : 'light');
+      }
+      btn.addEventListener('click', ()=>{
+        const now = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+        applyTheme(now);
+        setStored(now);
+      });
+    })();
+</script>
+</body>
+</html>
