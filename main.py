@@ -407,6 +407,9 @@ def api_stats():
     del_edit_stats = compute_deleted_edited_stats(msgs, user)
     group_stats = compute_group_stats(msgs, user)
 
+    # advanced stats
+    advanced = compute_advanced_stats(msgs, user)
+
     result = {
         "user": user,
         "messages_total": len(msgs),
@@ -427,6 +430,7 @@ def api_stats():
         "word_stats": word_stats,
         **del_edit_stats,
         **group_stats,
+        **advanced,
     }
     return Response(json.dumps(result, ensure_ascii=False, default=str, indent=2), mimetype="application/json; charset=utf-8")
 
@@ -740,6 +744,104 @@ def compute_group_stats(msgs, user):
         "group_most_messages": group_most_messages,
         "group_most_emojis": group_most_emojis,
         "group_longest_silence_broken_by_user": group_longest_silence,
+    }
+
+def compute_advanced_stats(msgs, user):
+    """
+    Compute advanced analytics:
+    1. Conversation Starters: count times user messaged after >6h silence.
+    2. Double Texting: count of 2, 3, 4+ consecutive messages.
+    3. Message Length: avg words per message.
+    4. Questions: count/% of messages containing '?'.
+    5. Laughter: count of laugh-related terms/emojis.
+    """
+    starts_count = 0
+    double_counts = {2: 0, 3: 0, 4: 0} # 4 represents 4 or more
+    total_words = 0
+    msg_count = 0
+    question_count = 0
+    laughter_count = 0
+
+    # Regex for laughter (hahaha, lol, lmao, jajaja, hebrew, emojis)
+    laugh_re = re.compile(r"(?:ha){2,}|(?:ja){2,}|(?:ח){2,}|lol|lmao|rofl|😂|🤣|💀|☠️", re.IGNORECASE)
+
+    # Sort messages globally by time for conversation flow analysis
+    # Note: msgs passed here are already filtered to user's active chats, but we need strictly time-ordered list of ALL messages in those chats to see silence/replies.
+    # However, 'msgs' is already sorted by time from _load_all_messages.
+
+    # We need to process per-chat for conversation starts/double texting to avoid cross-chat noise
+    chats = defaultdict(list)
+    for m in msgs:
+        c = m.get("source_file") or "unknown"
+        chats[c].append(m)
+
+    for chat_msgs in chats.values():
+        # ensure sorted
+        chat_msgs.sort(key=lambda x: (x.get("_dt_obj") or datetime.min))
+
+        # for double texting
+        streak = 0
+
+        for i, m in enumerate(chat_msgs):
+            sender = m.get("sender")
+            dt = m.get("_dt_obj")
+
+            # --- User Stats (only if sender is user) ---
+            if sender == user:
+                msg_count += 1
+                txt = (m.get("message") or "")
+
+                # Length
+                words = len(txt.split())
+                total_words += words
+
+                # Questions
+                if "?" in txt:
+                    question_count += 1
+
+                # Laughter
+                if laugh_re.search(txt):
+                    laughter_count += 1
+
+                # Conversation Starter (check prev msg)
+                if i > 0 and dt:
+                    prev = chat_msgs[i-1]
+                    prev_dt = prev.get("_dt_obj")
+                    if prev_dt:
+                        diff = (dt - prev_dt).total_seconds()
+                        # > 6 hours (21600 seconds) counts as starting a conversation
+                        if diff > 21600:
+                            starts_count += 1
+                elif i == 0:
+                    # first message in chat history counts as a start
+                    starts_count += 1
+
+                # Double Texting Streak
+                streak += 1
+            else:
+                # Other sender: streak ends
+                if streak >= 2:
+                    if streak == 2: double_counts[2] += 1
+                    elif streak == 3: double_counts[3] += 1
+                    else: double_counts[4] += 1
+                streak = 0
+
+        # End of chat: check final streak
+        if streak >= 2:
+            if streak == 2: double_counts[2] += 1
+            elif streak == 3: double_counts[3] += 1
+            else: double_counts[4] += 1
+
+    avg_len = round(total_words / msg_count, 1) if msg_count else 0
+    question_pct = round((question_count / msg_count) * 100, 1) if msg_count else 0
+
+    return {
+        "conversation_starts": starts_count,
+        "double_texting": double_counts,
+        "avg_msg_length": avg_len,
+        "questions_count": question_count,
+        "questions_pct": question_pct,
+        "laughter_count": laughter_count
     }
 
 def _word_freq_for_user(msgs, user):
