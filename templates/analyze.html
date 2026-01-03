@@ -7,135 +7,229 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-  <!-- header with theme toggle -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-    <h1 style="margin:0">Analyze uploaded chats</h1>
-    <button id="themeToggle" class="theme-toggle" title="Toggle dark / light">🌙</button>
-  </div>
 
-  <div class="card">
-    <div class="search-row">
-      <input id="search" placeholder="Search username..." style="flex:1;padding:8px;border-radius:6px;border:1px solid #ddd">
-      <button id="refresh">Refresh</button>
-      <button id="analyzeBtn" disabled>Analyze</button>
-      <a href="/" style="margin-left:8px" class="small-muted">Back</a>
+  <!-- Selection Screen -->
+  <div id="selectionScreen" class="container">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <h1 style="margin:0">Analyze uploaded chats</h1>
+        <button id="themeToggle" class="theme-toggle" title="Toggle dark / light">🌙</button>
     </div>
 
-    <!-- New: two selectors side-by-side -->
-    <div class="selectors">
-      <!-- left: username selector (unchanged behavior) -->
-      <div class="selector-col">
-        <div class="small-muted" style="margin-bottom:6px"><strong>Users</strong></div>
-        <div class="username-list" id="userList">Loading...</div>
-      </div>
-
-      <!-- right: year selector implemented like the username selector (multi-select) -->
-      <div class="selector-col">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-          <div class="small-muted"><strong>Years</strong></div>
-          <div>
-            <button id="clearYears" title="Clear year selection" class="small-muted" style="background:none;border:0;cursor:pointer">Clear</button>
-          </div>
+    <div class="card">
+        <div class="search-row">
+        <input id="search" placeholder="Search username..." style="flex:1;padding:8px;border-radius:6px;border:1px solid #ddd">
+        <button id="refresh">Refresh</button>
+        <button id="analyzeBtn" disabled>Analyze</button>
+        <a href="/" style="margin-left:8px" class="small-muted">Back</a>
         </div>
-        <div class="username-list" id="yearList">Loading...</div>
-        <div class="small-muted" style="margin-top:6px;font-size:12px">Click to toggle years (multi-select)</div>
-      </div>
+
+        <!-- New: two selectors side-by-side -->
+        <div class="selectors">
+        <!-- left: username selector (unchanged behavior) -->
+        <div class="selector-col">
+            <div class="small-muted" style="margin-bottom:6px"><strong>Users</strong></div>
+            <div class="username-list" id="userList">Loading...</div>
+        </div>
+
+        <!-- right: year selector implemented like the username selector (multi-select) -->
+        <div class="selector-col">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div class="small-muted"><strong>Years</strong></div>
+            <div>
+                <button id="clearYears" title="Clear year selection" class="small-muted" style="background:none;border:0;cursor:pointer">Clear</button>
+            </div>
+            </div>
+            <div class="username-list" id="yearList">Loading...</div>
+            <div class="small-muted" style="margin-top:6px;font-size:12px">Click to toggle years (multi-select)</div>
+        </div>
+        </div>
     </div>
   </div>
 
-  <div id="statsCard" class="card" style="display:none">
-    <h3>Stats for <span id="selUser"></span></h3>
+  <!-- Story / Wrapped View -->
+  <div id="storyView" class="story-overlay" style="display:none">
+    <button id="closeStory" class="close-btn">×</button>
 
-    <!-- Overview section (removed fastest-reply item) -->
-    <div class="stat-section" id="overview">
-      <h4>🔎 Overview</h4>
-      <div class="stat-item">💬 <strong>Total messages sent:</strong> <span id="sentCount"></span></div>
-      <div class="stat-item">📥 <strong>Total messages received:</strong> <span id="recvCount"></span></div>
-      <div class="stat-item">🗂️ <strong>Total chats participated in:</strong> <span id="chatsCount"></span></div>
-      <div class="stat-item">⏱️ <strong>Overall average reply (sec):</strong> <span id="avgReply"></span></div>
+    <!-- Navigation Areas -->
+    <div id="tapLeft" class="tap-area left"></div>
+    <div id="tapRight" class="tap-area right"></div>
+
+    <div class="story-content">
+
+        <!-- Slide 1: Intro -->
+        <div class="slide active" id="slide-1">
+            <div class="slide-body centered">
+                <h1 class="animate-pop">Let's unwind your chat history...</h1>
+                <p class="subtitle animate-fade">Analysis for <span id="selUser">User</span></p>
+                <div class="small-hint">Tap to continue</div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Overview -->
+        <div class="slide" id="slide-2">
+            <div class="slide-header">The Basics</div>
+            <div class="slide-body">
+                <h2 class="headline">You were quite the chatterbox.</h2>
+                <div class="big-stat">
+                    <span id="sentCount" class="highlight">0</span>
+                    <span class="label">Messages Sent</span>
+                </div>
+                <div class="big-stat">
+                    <span id="recvCount" class="highlight">0</span>
+                    <span class="label">Messages Received</span>
+                </div>
+                <div class="stat-row">
+                    <span>In <strong id="chatsCount">0</strong> chats</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Timing -->
+        <div class="slide" id="slide-3">
+            <div class="slide-header">Timing</div>
+            <div class="slide-body">
+                <h2 class="headline" id="timeHeadline">You have a rhythm.</h2>
+                <div class="big-stat">
+                    <span id="activeHour" class="highlight">00:00</span>
+                    <span class="label">Most Active Hour</span>
+                </div>
+                <div class="stat-box">
+                    <p>Your favorite day was <strong id="activeWeekday" class="accent-text">Monday</strong></p>
+                </div>
+                <div class="stat-row">
+                   Late night messages: <strong id="lateNightCount">0</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Habits -->
+        <div class="slide" id="slide-4">
+            <div class="slide-header">Habits</div>
+            <div class="slide-body">
+                <h2 class="headline">Consistency is key.</h2>
+                <div class="grid-stats">
+                    <div class="grid-item">
+                        <span id="activeDays" class="number">0</span>
+                        <span class="sub">Active Days</span>
+                    </div>
+                    <div class="grid-item">
+                        <span id="avgPerDay" class="number">0</span>
+                        <span class="sub">Msgs/Day</span>
+                    </div>
+                </div>
+                <div class="stat-box mt-4">
+                    <p>Usually, you reply in</p>
+                    <h3 id="avgReply" class="accent-text">0 sec</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Emojis -->
+        <div class="slide" id="slide-5">
+            <div class="slide-header">Expressions</div>
+            <div class="slide-body centered">
+                <h2 class="headline">Your emotional support emoji</h2>
+                <div id="emotionalEmojiDisplay" class="giant-emoji">😊</div>
+                <p class="subtitle" id="emotionalEmojiCount">Used 0 times</p>
+
+                <div class="top-list mt-4">
+                    <p>Runners up:</p>
+                    <div id="topEmojis" class="emoji-row"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Voice -->
+        <div class="slide" id="slide-6">
+            <div class="slide-header">Voice</div>
+            <div class="slide-body">
+                <h2 class="headline">Mic check... 1, 2.</h2>
+                <div class="big-stat">
+                    <span id="voiceCount" class="highlight">0</span>
+                    <span class="label">Voice Notes</span>
+                </div>
+                <div class="stat-row">
+                    Totaling <strong id="voiceHours">0.0</strong> hours of talking.
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Streaks -->
+        <div class="slide" id="slide-7">
+            <div class="slide-header">Streaks & Peaks</div>
+            <div class="slide-body">
+                <h2 class="headline">You couldn't stop talking!</h2>
+                <div class="big-stat">
+                    <span id="longestStreak" class="highlight">0</span>
+                    <span class="label">Days Streak</span>
+                </div>
+                <div class="small-hint" id="longestStreakRange"></div>
+
+                <div class="stat-box mt-4">
+                    <p>Busiest Day: <strong id="busiestDay"></strong></p>
+                </div>
+            </div>
+        </div>
+
+         <!-- Slide 8: Words -->
+         <div class="slide" id="slide-8">
+            <div class="slide-header">Vocabulary</div>
+            <div class="slide-body">
+                <h2 class="headline">What you talked about</h2>
+                <div id="wordCloud" class="word-cloud-container">
+                    <img id="wordCloudImg" alt="word cloud" style="max-width:100%;height:auto;display:none" />
+                </div>
+                <div id="topWordsInline" class="small-text mt-2"></div>
+            </div>
+        </div>
+
+        <!-- Slide 9: Groups & Friends -->
+        <div class="slide" id="slide-9">
+            <div class="slide-header">The Crew</div>
+            <div class="slide-body">
+                <h2 class="headline">Squad Goals</h2>
+                <div class="stat-box">
+                    <p>Most active group:</p>
+                    <h3 id="groupMostMsgs" class="accent-text">Group</h3>
+                </div>
+
+                <div class="top-list mt-4">
+                    <p>Top Chatterboxes:</p>
+                    <div id="topSenders" class="list-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: Summary -->
+        <div class="slide" id="slide-10">
+            <div class="slide-body centered">
+                <h1 class="animate-pop">That's a wrap!</h1>
+                <p>See you next year?</p>
+                <button id="replayBtn" class="big-btn">Replay</button>
+                <button id="downloadStats" class="secondary-btn mt-2">Download JSON</button>
+            </div>
+             <pre id="rawStats" style="display:none"></pre>
+        </div>
+
     </div>
 
-    <!-- Activity section -->
-    <div class="stat-section" id="activity">
-      <h4>⚡ Activity</h4>
-      <div class="stat-item">📅 <strong>Active days:</strong> <span id="activeDays"></span></div>
-      <div class="stat-item">📊 <strong>Avg messages/day:</strong> <span id="avgPerDay"></span></div>
+    <!-- Progress Bars -->
+    <div class="progress-container">
+        <div class="progress-bar active"></div>
+        <div class="progress-bar"></div>
+        <div class="progress-bar"></div>
+        <div class="progress-bar"></div>
+        <div class="progress-bar"></div>
+        <div class="progress-bar"></div>
+        <div class="progress-bar"></div>
+        <div class="progress-bar"></div>
+        <div class="progress-bar"></div>
+        <div class="progress-bar"></div>
     </div>
-
-    <!-- Messages section -->
-    <div class="stat-section" id="messages">
-      <h4>✉️ Messages</h4>
-      <div class="stat-item">📝 <strong>Longest message (chars):</strong> <span id="longestMsg"></span></div>
-      <div class="stat-item">✂️ <strong>Shortest message (chars):</strong> <span id="shortestMsg"></span></div>
-    </div>
-
-    <!-- Time section -->
-    <div class="stat-section" id="time">
-      <h4>⏰ Time</h4>
-      <div class="stat-item">🕒 <strong>Most active hour:</strong> <span id="activeHour"></span></div>
-      <div class="stat-item">📆 <strong>Most active weekday:</strong> <span id="activeWeekday"></span></div>
-    </div>
-
-    <!-- New Emoji & Voice section -->
-    <div class="stat-section" id="emojiVoice">
-      <h4>🎭 Emoji & Voice</h4>
-      <div class="stat-item">😊 <strong>Your emotional support emoji was:</strong> <span id="emotionalEmoji">n/a</span></div>
-      <div class="stat-item">🔢 <strong>Total emojis sent:</strong> <span id="totalEmojis">0</span></div>
-      <div class="stat-item">🏆 <strong>Top 5 emojis:</strong> <span id="topEmojis"></span></div>
-      <div class="stat-item">🎙️ <strong>Voice notes:</strong> <span id="voiceCount">0</span> notes • <span id="voiceHours">0.0</span> hours</div>
-    </div>
-
-    <!-- New Streaks & Peaks section -->
-    <div class="stat-section" id="streaks">
-      <h4>🔥 Streaks & Peaks</h4>
-      <div class="stat-item">🌙 <strong>Late-night messages (0–3):</strong> <span id="lateNightCount">0</span></div>
-      <div class="stat-item">🌅 <strong>Early-bird messages (4–6):</strong> <span id="earlyBirdCount">0</span></div>
-      <div class="stat-item">📈 <strong>Longest daily messaging streak:</strong> <span id="longestStreak">0</span> <em id="longestStreakRange"></em></div>
-      <div class="stat-item">📅 <strong>Busiest single day:</strong> <span id="busiestDay">n/a</span></div>
-      <div class="stat-item">⏱️ <strong>Busiest single hour:</strong> <span id="busiestHour">n/a</span></div>
-      <div class="stat-item">📊 <strong>Week you were most active:</strong> <span id="weekMost">n/a</span></div>
-      <div class="stat-item">📆 <strong>Month with most messages:</strong> <span id="monthMost">n/a</span></div>
-    </div>
-
-    <!-- New Conversation Insights section -->
-    <div class="stat-section" id="conversationInsights">
-      <h4>💡 Conversation Insights</h4>
-      <div class="stat-item">🗑️ <strong>Messages deleted:</strong> <span id="messagesDeleted">0</span></div>
-      <div class="stat-item">✏️ <strong>Messages edited:</strong> <span id="messagesEdited">0</span></div>
-      <div class="stat-item">☁️ <strong>Top words:</strong> <span id="topWords"></span></div>
-      <div class="stat-item">🔢 <strong>Total words sent:</strong> <span id="totalWords">0</span></div>
-    </div>
-
-    <!-- New Group Insights section -->
-    <div class="stat-section" id="groupInsights">
-      <h4>👥 Group Insights</h4>
-      <div class="stat-item">🏆 <strong>Group you messaged most:</strong> <span id="groupMostMsgs">n/a</span></div>
-      <div class="stat-item">🎭 <strong>Group with most emojis:</strong> <span id="groupMostEmojis">n/a</span></div>
-      <div class="stat-item">🤫 <strong>Longest silence you broke:</strong> <span id="groupLongestSilence">n/a</span></div>
-    </div>
-
-    <!-- Insert Word Cloud section (place before Conversation Insights) -->
-    <div class="stat-section" id="wordCloudSection">
-      <h4>☁️ Word Cloud</h4>
-      <!-- server-generated image -->
-      <div id="wordCloud" class="word-cloud" aria-hidden="false">
-        <img id="wordCloudImg" alt="word cloud" style="max-width:100%;height:auto;display:none" />
-      </div>
-      <div class="small-muted" style="margin-top:8px">Top words (text): <span id="topWordsInline"></span></div>
-    </div>
-
-    <h4 style="margin-top:12px">Top people sending messages</h4>
-    <div id="topSenders"></div>
-
-    <div style="margin-top:12px">
-      <button id="downloadStats">Download stats JSON</button>
-    </div>
-
-    <pre id="rawStats" style="margin-top:12px;max-height:360px;overflow:auto"></pre>
   </div>
+
 
 <script>
-  // ...existing JS variables and helper functions ...
   let usernames = [];
   let filtered = [];
   let selected = null;
@@ -145,6 +239,13 @@
   const analyzeBtn = document.getElementById('analyzeBtn');
   const refreshBtn = document.getElementById('refresh');
   const selUserEl = document.getElementById('selUser');
+
+  // Story elements
+  const selectionScreen = document.getElementById('selectionScreen');
+  const storyView = document.getElementById('storyView');
+  const slides = document.querySelectorAll('.slide');
+  const progressBars = document.querySelectorAll('.progress-bar');
+  let currentSlide = 0;
 
   // track selected years as a Set for multi-select
   const selectedYears = new Set();
@@ -233,7 +334,33 @@
     if(chosen.length){
       params.set('years', chosen.join(','));
     }
+
+    // Show loading or disable button
+    analyzeBtn.textContent = "Crunching numbers...";
+    analyzeBtn.disabled = true;
+
     fetch('/api/stats?' + params.toString()).then(r=>r.json()).then(j=>{
+      // Populate Data
+      populateStats(j, selected, chosen);
+
+      // Switch to story view
+      selectionScreen.style.display = 'none';
+      storyView.style.display = 'block';
+      currentSlide = 0;
+      updateSlide();
+
+      analyzeBtn.textContent = "Analyze";
+      analyzeBtn.disabled = false;
+
+    }).catch(e=>{
+      alert('Failed to compute stats');
+      analyzeBtn.textContent = "Analyze";
+      analyzeBtn.disabled = false;
+      console.error(e);
+    });
+  });
+
+  function populateStats(j, user, yearsArray) {
       // Overview
       document.getElementById('sentCount').textContent = j.total_messages_sent;
       document.getElementById('recvCount').textContent = j.total_messages_received;
@@ -246,35 +373,43 @@
       document.getElementById('activeDays').textContent = j.total_active_days;
       document.getElementById('avgPerDay').textContent = Math.round((j.avg_messages_per_day||0)*100)/100;
 
-      // Messages
-      document.getElementById('longestMsg').textContent = j.longest_message_sent ? j.longest_message_sent.length + ' chars' : 'n/a';
-      document.getElementById('shortestMsg').textContent = j.shortest_message_sent ? j.shortest_message_sent.length + ' chars' : 'n/a';
-
       // Time
       document.getElementById('activeHour').textContent = j.most_active_hour !== null ? (j.most_active_hour + ':00') : 'n/a';
+      // Headline logic for time
+      if(j.most_active_hour !== null) {
+          const h = j.most_active_hour;
+          let label = "Day";
+          if(h >= 5 && h < 12) label = "Morning";
+          else if(h >= 12 && h < 18) label = "Afternoon";
+          else if(h >= 18 && h < 22) label = "Evening";
+          else label = "Night";
+          document.getElementById('timeHeadline').textContent = `You are a ${label} person.`;
+      }
+
       const weekdays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
       document.getElementById('activeWeekday').textContent = j.most_active_day_of_week !== null ? weekdays[j.most_active_day_of_week] : 'n/a';
 
-      // Emoji & Voice population (existing)
+      // Emoji
       const es = j.emoji_stats || {};
       if(es.most_used){
-        document.getElementById('emotionalEmoji').textContent = `${es.most_used.emoji} ×${es.most_used.count}`;
+        document.getElementById('emotionalEmojiDisplay').textContent = es.most_used.emoji;
+        document.getElementById('emotionalEmojiCount').textContent = `Used ${es.most_used.count} times`;
       } else {
-        document.getElementById('emotionalEmoji').textContent = 'n/a';
+        document.getElementById('emotionalEmojiDisplay').textContent = '😐';
+        document.getElementById('emotionalEmojiCount').textContent = 'No emojis found';
       }
-      document.getElementById('totalEmojis').textContent = es.total_emojis || 0;
       const topEl = document.getElementById('topEmojis');
-      topEl.textContent = (es.top_5 || []).map(e=> `${e.emoji}×${e.count}`).join(' ');
+      topEl.textContent = (es.top_5 || []).slice(1).map(e=> `${e.emoji}`).join('  '); // Skip first as it's the main one
 
+      // Voice
       const vs = j.voice_stats || {};
       const secs = vs.voice_total_seconds || 0;
       const hours = Math.round((secs/3600)*10)/10;
       document.getElementById('voiceCount').textContent = vs.voice_messages_count || 0;
       document.getElementById('voiceHours').textContent = hours;
 
-      // Streaks & Peaks (existing)
+      // Streaks
       document.getElementById('lateNightCount').textContent = j.late_night_messages_count ?? 0;
-      document.getElementById('earlyBirdCount').textContent = j.early_bird_messages_count ?? 0;
 
       const ls = j.longest_daily_streak;
       if(ls){
@@ -287,55 +422,91 @@
       }
 
       const bd = j.busiest_single_day;
-      document.getElementById('busiestDay').textContent = bd ? `${bd.date} (${bd.count})` : 'n/a';
+      document.getElementById('busiestDay').textContent = bd ? `${bd.date} (${bd.count} msgs)` : 'n/a';
 
-      const bh = j.busiest_single_hour;
-      document.getElementById('busiestHour').textContent = bh ? `${bh.hour}:00 (${bh.count})` : 'n/a';
-
-      const wm = j.week_most_active;
-      document.getElementById('weekMost').textContent = wm ? `${wm.week} (${wm.count})` : 'n/a';
-
-      const mm = j.month_with_most_messages;
-      document.getElementById('monthMost').textContent = mm ? `${mm.month} (${mm.count})` : 'n/a';
-
-      // Conversation Insights (new)
-      const del = j.messages_deleted ?? 0;
-      const edt = j.messages_edited ?? 0;
-      document.getElementById('messagesDeleted').textContent = del;
-      document.getElementById('messagesEdited').textContent = edt;
-
+      // Word Cloud
       const ws = j.word_stats || {};
-      // attempt server-side image first; fallback to client-side using ws.top_words
-      requestWordCloudFromServer(selected, chosen, ws.top_words || []);
-      // keep the textual topWords element updated too
-      document.getElementById('topWords').textContent = (ws.top_words || []).slice(0,12).map(w=> `${w.word}×${w.count}`).join(', ');
-      document.getElementById('totalWords').textContent = ws.total_words || 0;
+      requestWordCloudFromServer(user, yearsArray, ws.top_words || []);
+      // Text fallback
+      document.getElementById('topWordsInline').textContent = (ws.top_words || []).slice(0,10).map(w=> w.word).join(', ');
 
-      // Group Insights (new)
+      // Groups
       const gm = j.group_most_messages;
       document.getElementById('groupMostMsgs').textContent = gm ? `${gm.chat} (${gm.count})` : 'n/a';
-      const ge = j.group_most_emojis;
-      document.getElementById('groupMostEmojis').textContent = ge ? `${ge.chat} (${ge.count})` : 'n/a';
-      const gl = j.group_longest_silence_broken_by_user;
-      document.getElementById('groupLongestSilence').textContent = gl ? `${gl.chat} • ${formatDuration(gl.seconds)} (since ${gl.start?gl.start.split('T')[0]:''})` : 'n/a';
 
-      // top contacts (existing)
+      // Top Senders
       const topEl2 = document.getElementById('topSenders');
       topEl2.innerHTML = '';
-      (j.top_senders || []).slice(0,20).forEach(t=>{
+      (j.top_senders || []).slice(0,5).forEach((t, index)=>{
         const r = document.createElement('div');
-        r.textContent = `${t.name}: ${t.count}`;
+        r.className = 'top-sender-item';
+        r.textContent = `#${index+1} ${t.name} (${t.count})`;
         topEl2.appendChild(r);
       });
 
+      // Raw for download
       document.getElementById('rawStats').textContent = JSON.stringify(j, null, 2);
-      document.getElementById('statsCard').style.display = 'block';
-    }).catch(e=>{
-      alert('Failed to compute stats');
-    });
+  }
+
+  // --- Story Navigation ---
+  function updateSlide() {
+      slides.forEach((s, i) => {
+          if (i === currentSlide) {
+            s.classList.add('active');
+            s.style.display = 'block';
+          } else {
+            s.classList.remove('active');
+            s.style.display = 'none';
+          }
+      });
+      progressBars.forEach((p, i) => {
+          if (i <= currentSlide) p.classList.add('filled');
+          else p.classList.remove('filled');
+      });
+  }
+
+  function nextSlide() {
+      if (currentSlide < slides.length - 1) {
+          currentSlide++;
+          updateSlide();
+      } else {
+        // End of story
+        // Maybe loop back or show close button emphasis?
+      }
+  }
+
+  function prevSlide() {
+      if (currentSlide > 0) {
+          currentSlide--;
+          updateSlide();
+      }
+  }
+
+  document.getElementById('tapRight').addEventListener('click', nextSlide);
+  document.getElementById('tapLeft').addEventListener('click', prevSlide);
+
+  // Keyboard nav
+  document.addEventListener('keydown', (e) => {
+      if(storyView.style.display === 'none') return;
+      if(e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+      if(e.key === 'ArrowLeft') prevSlide();
+      if(e.key === 'Escape') closeStory();
   });
 
+  function closeStory() {
+      storyView.style.display = 'none';
+      selectionScreen.style.display = 'block';
+  }
+
+  document.getElementById('closeStory').addEventListener('click', closeStory);
+  document.getElementById('replayBtn').addEventListener('click', () => {
+      currentSlide = 0;
+      updateSlide();
+  });
+
+
   refreshBtn.addEventListener('click', ()=> { loadUsernames(); loadYears(); });
+
   document.getElementById('downloadStats').addEventListener('click', ()=>{
     const text = document.getElementById('rawStats').textContent;
     if(!text) return;
@@ -392,17 +563,12 @@
     // clear previous non-img children
     Array.from(area.querySelectorAll('.wc-word')).forEach(n=>n.remove());
     if(!topWords || topWords.length===0){
-      // place a simple text node
-      const t = document.createElement('div');
-      t.className = 'small-muted';
-      t.textContent = 'No words available';
-      area.appendChild(t);
-      document.getElementById('topWordsInline').textContent = '';
+        // Do nothing or show placeholder
       return;
     }
     const counts = topWords.map(w=>w.count);
     const minC = Math.min(...counts), maxC = Math.max(...counts);
-    const minSize = 14, maxSize = 42;
+    const minSize = 14, maxSize = 36;
     function sizeForCount(c){
       if(maxC === minC) return (minSize+maxSize)/2;
       return Math.round(minSize + (c - minC) / (maxC - minC) * (maxSize - minSize));
@@ -413,11 +579,10 @@
       sp.textContent = w.word;
       sp.title = `${w.word} ×${w.count}`;
       sp.style.fontSize = sizeForCount(w.count) + 'px';
-      sp.style.margin = '6px';
+      sp.style.margin = '4px';
       sp.style.display = 'inline-block';
       area.appendChild(sp);
     });
-    document.getElementById('topWordsInline').textContent = topWords.slice(0,12).map(w=>`${w.word}×${w.count}`).join(', ');
   }
 
   // initial load
@@ -426,7 +591,7 @@
 </script>
 
 <script>
-  // filepath: C:\Users\noam2\Documents\Src\whatsapp_wrapped\templates\analyze.html (theme snippet)
+  // Theme logic
   (function(){
     const key = 'wh_wrapped_theme';
     const btn = document.getElementById('themeToggle');
@@ -456,4 +621,3 @@
 
 </body>
 </html>
-

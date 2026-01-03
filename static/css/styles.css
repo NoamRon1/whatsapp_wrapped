@@ -110,3 +110,244 @@ button.secondary{background:#6c757d;color:#fff}
 /* small tweak for toggle contrast in dark */
 .dark .theme-toggle{background:rgba(255,255,255,0.04);color:var(--text)}
 .theme-toggle:focus{outline:2px solid rgba(0,123,255,0.18);outline-offset:2px}
+
+
+/* --- Story / Wrapped Mode Styles --- */
+
+.story-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--bg);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Navigation Tap Areas */
+.tap-area {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 30%;
+    z-index: 100;
+    /* background: rgba(0,0,0,0.1); /* debug */
+    cursor: pointer;
+}
+.tap-area.left { left: 0; }
+.tap-area.right { right: 0; }
+
+.close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(128,128,128,0.2);
+    color: var(--text);
+    border: none;
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 1002;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.close-btn:hover {
+    background: rgba(128,128,128,0.4);
+}
+
+.story-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 20px;
+    text-align: center;
+}
+
+/* Progress Bars */
+.progress-container {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    gap: 4px;
+    z-index: 1001;
+}
+
+.progress-bar {
+    height: 4px;
+    flex: 1;
+    background: rgba(128,128,128,0.3);
+    border-radius: 2px;
+    transition: background 0.3s;
+}
+
+.progress-bar.filled {
+    background: var(--text); /* Or an accent color */
+}
+
+/* Slides */
+.slide {
+    width: 100%;
+    height: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Center vertically by default */
+    align-items: center;
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.slide-header {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.6;
+    margin-bottom: 20px;
+    position: absolute;
+    top: 60px; /* Below progress bars */
+    width: 100%;
+    text-align: center;
+}
+
+.slide-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+.slide-body.centered {
+    justify-content: center;
+}
+
+.headline {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 30px;
+    line-height: 1.2;
+    background: -webkit-linear-gradient(45deg, var(--accent), #d6249f);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.big-stat {
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+}
+.big-stat .highlight {
+    font-size: 4rem;
+    font-weight: 900;
+    color: var(--text);
+}
+.big-stat .label {
+    font-size: 1.2rem;
+    opacity: 0.8;
+}
+
+.stat-row {
+    font-size: 1.5rem;
+    margin-top: 10px;
+    opacity: 0.9;
+}
+
+.grid-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+.grid-item {
+    background: rgba(128,128,128,0.1);
+    padding: 20px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+}
+.grid-item .number {
+    font-size: 2rem;
+    font-weight: bold;
+}
+.grid-item .sub {
+    font-size: 1rem;
+    opacity: 0.7;
+}
+
+.stat-box {
+    background: var(--muted-2);
+    padding: 20px;
+    border-radius: 12px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.giant-emoji {
+    font-size: 8rem;
+    margin: 20px 0;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+    40% {transform: translateY(-20px);}
+    60% {transform: translateY(-10px);}
+}
+
+.emoji-row {
+    font-size: 2rem;
+    margin-top: 10px;
+}
+
+.accent-text {
+    color: var(--accent);
+    font-weight: bold;
+}
+
+.mt-2 { margin-top: 8px; }
+.mt-4 { margin-top: 16px; }
+
+/* Custom colors for slides if we want variety */
+/* Example: .slide:nth-child(2) { background: ... } */
+/* For now, sticking to theme colors but maybe adding subtle gradients */
+
+.secondary-btn {
+    background: transparent;
+    border: 1px solid var(--text);
+    color: var(--text);
+    padding: 10px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+.top-sender-item {
+    padding: 8px;
+    border-bottom: 1px solid rgba(128,128,128,0.2);
+    font-size: 1.1rem;
+    text-align: left;
+    width: 100%;
+}
+.list-container {
+    width: 100%;
+    max-width: 400px;
+    text-align: left;
+}
+
+.small-hint {
+    font-size: 0.9rem;
+    opacity: 0.6;
+    margin-top: 10px;
+}
