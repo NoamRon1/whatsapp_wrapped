@@ -387,7 +387,8 @@ def api_stats():
 
     # emoji & voice stats
     emoji_stats = compute_emoji_stats(msgs, user)
-    voice_stats = compute_voice_stats(msgs, user)
+    # emoji & voice stats (voice removed by request)
+    emoji_stats = compute_emoji_stats(msgs, user)
 
     # time/streak stats
     time_stats = compute_time_stats(msgs, user)
@@ -411,7 +412,6 @@ def api_stats():
         "reply_samples": reply["reply_samples"],
         # emoji/voice
         "emoji_stats": emoji_stats,
-        "voice_stats": voice_stats,
         # time/streaks
         **time_stats,
         # new extras
@@ -511,12 +511,19 @@ def compute_time_stats(msgs, user):
       - busiest_single_hour: {"hour": int, "count": int} or None
       - week_most_active: {"week": "YYYY-WW", "count": int} or None
       - month_with_most_messages: {"month": "YYYY-MM", "count": int} or None
+      - hourly_distribution: dict {0..23: count}
+      - monthly_distribution: dict {1..12: count}
     """
     from collections import Counter
     per_date = Counter()
     per_hour = Counter()
     per_week = Counter()
     per_month = Counter()
+
+    # Initialize distributions with 0
+    hourly_distribution = {h: 0 for h in range(24)}
+    monthly_distribution = {m: 0 for m in range(1, 13)}
+
     user_dates = set()
 
     for m in msgs:
@@ -532,6 +539,9 @@ def compute_time_stats(msgs, user):
         per_week[(iso_year, iso_week)] += 1
         per_month[(dt.year, dt.month)] += 1
         user_dates.add(date)
+
+        hourly_distribution[dt.hour] += 1
+        monthly_distribution[dt.month] += 1
 
     # late night: hours 0-3 (after midnight)
     late_night_count = sum(cnt for h, cnt in per_hour.items() if 0 <= h <= 3)
@@ -591,6 +601,8 @@ def compute_time_stats(msgs, user):
         "busiest_single_hour": busiest_single_hour,
         "week_most_active": week_most_active,
         "month_with_most_messages": month_with_most_messages,
+        "hourly_distribution": hourly_distribution,
+        "monthly_distribution": monthly_distribution,
     }
 
 # New: compute word-cloud / most used words
