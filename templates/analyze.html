@@ -190,8 +190,69 @@
             </div>
         </div>
 
-        <!-- Slide 9: Habits -->
+        <!-- Slide 9: The Gallery (New) -->
         <div class="slide" id="slide-9">
+            <div class="slide-header">The Gallery</div>
+            <div class="slide-body">
+                <h2 class="headline" id="mediaHeadline">A picture is worth 1000 words.</h2>
+                <div class="big-stat">
+                    <span id="mediaCount" class="highlight">0</span>
+                    <span class="label">Photos & Videos</span>
+                </div>
+                <div class="stat-box mt-4">
+                    <p>That's a lot of memories shared.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: The Librarian (New) -->
+        <div class="slide" id="slide-10">
+            <div class="slide-header">The Librarian</div>
+            <div class="slide-body">
+                <h2 class="headline">You're the source.</h2>
+                <div class="big-stat">
+                    <span id="linkCount" class="highlight">0</span>
+                    <span class="label">Links Shared</span>
+                </div>
+                <div class="stat-row">
+                    Always sharing the latest news (or memes).
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 11: Work/Life (New) -->
+        <div class="slide" id="slide-11">
+            <div class="slide-header">Work / Life Balance</div>
+            <div class="slide-body">
+                <h2 class="headline" id="weekendHeadline">Living for the weekend.</h2>
+                <div class="chart-container ratio-chart">
+                    <div class="bar-sent" id="barWeekend" style="width:28%">Weekend</div>
+                    <div class="bar-recv" id="barWeekday" style="width:72%">Weekday</div>
+                </div>
+                <div class="stat-box mt-4">
+                    <p><strong id="weekendPct">0</strong>% of your messages were sent on weekends.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 12: Love Language (New) -->
+        <div class="slide" id="slide-12">
+            <div class="slide-header">Love Language</div>
+            <div class="slide-body">
+                <h2 class="headline" id="loveHeadline">Tough love?</h2>
+                <div class="big-stat">
+                    <span id="affectionCount" class="highlight">0</span>
+                    <span class="label">Affectionate Messages</span>
+                </div>
+                <div class="stat-row">
+                    You also used <strong id="emojiUnique">0</strong> distinct types of emojis. A true artist.
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 13: Habits -->
+        <!-- Slide 13: Habits -->
+        <div class="slide" id="slide-13">
             <div class="slide-header">Habits</div>
             <div class="slide-body">
                 <h2 class="headline">Consistency is key.</h2>
@@ -212,8 +273,8 @@
             </div>
         </div>
 
-        <!-- Slide 10: Emojis -->
-        <div class="slide" id="slide-10">
+        <!-- Slide 14: Emojis -->
+        <div class="slide" id="slide-14">
             <div class="slide-header">Expressions</div>
             <div class="slide-body centered">
                 <h2 class="headline">Your emotional support emoji</h2>
@@ -227,8 +288,8 @@
             </div>
         </div>
 
-        <!-- Slide 11: Streaks -->
-        <div class="slide" id="slide-11">
+        <!-- Slide 15: Streaks -->
+        <div class="slide" id="slide-15">
             <div class="slide-header">Streaks & Peaks</div>
             <div class="slide-body">
                 <h2 class="headline">You couldn't stop talking!</h2>
@@ -244,8 +305,8 @@
             </div>
         </div>
 
-         <!-- Slide 12: Words -->
-         <div class="slide" id="slide-12">
+         <!-- Slide 16: Words -->
+         <div class="slide" id="slide-16">
             <div class="slide-header">Vocabulary</div>
             <div class="slide-body">
                 <h2 class="headline">What you talked about</h2>
@@ -256,8 +317,8 @@
             </div>
         </div>
 
-        <!-- Slide 13: Groups & Friends -->
-        <div class="slide" id="slide-13">
+        <!-- Slide 17: Groups & Friends -->
+        <div class="slide" id="slide-17">
             <div class="slide-header">The Crew</div>
             <div class="slide-body">
                 <h2 class="headline">Squad Goals</h2>
@@ -273,8 +334,8 @@
             </div>
         </div>
 
-        <!-- Slide 14: Summary -->
-        <div class="slide" id="slide-14">
+        <!-- Slide 18: Summary -->
+        <div class="slide" id="slide-18">
             <div class="slide-body centered">
                 <h1 class="animate-pop">That's a wrap!</h1>
                 <p>See you next year?</p>
@@ -289,6 +350,10 @@
     <!-- Progress Bars -->
     <div class="progress-container">
         <div class="progress-bar active"></div>
+        <div class="progress-bar"></div>
+        <div class="progress-bar"></div>
+        <div class="progress-bar"></div>
+        <div class="progress-bar"></div>
         <div class="progress-bar"></div>
         <div class="progress-bar"></div>
         <div class="progress-bar"></div>
@@ -521,6 +586,24 @@
       document.getElementById('laughCount').textContent = j.laughter_count || 0;
       document.getElementById('questionsCount').textContent = j.questions_count || 0;
       document.getElementById('questionsPct').textContent = j.questions_pct || 0;
+
+      // New Stats
+      document.getElementById('mediaCount').textContent = j.media_count || 0;
+      document.getElementById('mediaHeadline').textContent = (j.media_count > 50) ? "A picture is worth 1000 words." : "Words are enough.";
+
+      document.getElementById('linkCount').textContent = j.link_count || 0;
+
+      const wkPct = j.weekend_pct || 0;
+      document.getElementById('weekendPct').textContent = wkPct;
+      document.getElementById('barWeekend').style.width = wkPct + '%';
+      document.getElementById('barWeekday').style.width = (100 - wkPct) + '%';
+      document.getElementById('barWeekend').textContent = wkPct + '%';
+      document.getElementById('barWeekday').textContent = (100 - wkPct) + '%';
+      document.getElementById('weekendHeadline').textContent = (wkPct > 35) ? "Living for the weekend." : "24/7 Hustle.";
+
+      document.getElementById('affectionCount').textContent = j.affection_count || 0;
+      document.getElementById('loveHeadline').textContent = (j.affection_count > 5) ? "Love is in the air." : "Tough love?";
+      document.getElementById('emojiUnique').textContent = j.emoji_unique || 0;
 
       // Reply stats
       document.getElementById('avgReply').textContent = j.overall_avg_reply_seconds ? (Math.round(j.overall_avg_reply_seconds)) + ' sec' : 'n/a';

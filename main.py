@@ -813,8 +813,18 @@ def compute_advanced_stats(msgs, user):
     question_count = 0
     laughter_count = 0
 
+    # New stats counters
+    media_count = 0
+    link_count = 0
+    weekend_count = 0
+    affection_count = 0
+    emoji_set = set()
+
     # Regex for laughter (hahaha, lol, lmao, jajaja, hebrew, emojis)
     laugh_re = re.compile(r"(?:ha){2,}|(?:ja){2,}|(?:ח){2,}|lol|lmao|rofl|😂|🤣|💀|☠️", re.IGNORECASE)
+
+    # Regex for affection
+    love_re = re.compile(r"love|miss\s*you|heart|babe|honey|❤️|🥰|😘", re.IGNORECASE)
 
     # Sort messages globally by time for conversation flow analysis
     # Note: msgs passed here are already filtered to user's active chats, but we need strictly time-ordered list of ALL messages in those chats to see silence/replies.
@@ -841,6 +851,27 @@ def compute_advanced_stats(msgs, user):
             if sender == user:
                 msg_count += 1
                 txt = (m.get("message") or "")
+
+                # Media check
+                if "<Media omitted>" in txt or "image omitted" in txt or "video omitted" in txt:
+                    media_count += 1
+
+                # Link check
+                if "http://" in txt or "https://" in txt:
+                    link_count += 1
+
+                # Weekend check (Sat=5, Sun=6)
+                if dt and dt.weekday() >= 5:
+                    weekend_count += 1
+
+                # Affection
+                if love_re.search(txt):
+                    affection_count += 1
+
+                # Unique Emojis
+                found_emojis = _extract_emojis(txt)
+                for e in found_emojis:
+                    emoji_set.add(e)
 
                 # Length
                 words = len(txt.split())
@@ -885,6 +916,7 @@ def compute_advanced_stats(msgs, user):
 
     avg_len = round(total_words / msg_count, 1) if msg_count else 0
     question_pct = round((question_count / msg_count) * 100, 1) if msg_count else 0
+    weekend_pct = round((weekend_count / msg_count) * 100, 1) if msg_count else 0
 
     return {
         "conversation_starts": starts_count,
@@ -892,7 +924,12 @@ def compute_advanced_stats(msgs, user):
         "avg_msg_length": avg_len,
         "questions_count": question_count,
         "questions_pct": question_pct,
-        "laughter_count": laughter_count
+        "laughter_count": laughter_count,
+        "media_count": media_count,
+        "link_count": link_count,
+        "weekend_pct": weekend_pct,
+        "affection_count": affection_count,
+        "emoji_unique": len(emoji_set)
     }
 
 def _word_freq_for_user(msgs, user):
