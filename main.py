@@ -376,6 +376,15 @@ def api_stats():
     if years_filter:
         msgs = [m for m in msgs if m.get("_dt_obj") and m["_dt_obj"].year in years_filter]
 
+    # Filter: retain only messages from chats where the user has sent at least one message
+    active_chats = set()
+    for m in msgs:
+        if m.get("sender") == user:
+            active_chats.add(m.get("source_file"))
+
+    # Filter global list to strictly these chats
+    msgs = [m for m in msgs if m.get("source_file") in active_chats]
+
     # activity & message stats
     activity = compute_chats_activity(msgs, user)
 
