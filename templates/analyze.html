@@ -10,38 +10,51 @@
 
   <!-- Selection Screen -->
   <div id="selectionScreen" class="container">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <h1 style="margin:0">Analyze uploaded chats</h1>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+        <h1 style="margin:0;font-size:2rem;font-weight:800;background:-webkit-linear-gradient(45deg,#0b74ff,#d6249f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">WhatsApp Wrapped</h1>
         <button id="themeToggle" class="theme-toggle" title="Toggle dark / light">🌙</button>
     </div>
 
-    <div class="card">
-        <div class="search-row">
-        <input id="search" placeholder="Search username..." style="flex:1;padding:8px;border-radius:6px;border:1px solid #ddd">
-        <button id="refresh">Refresh</button>
-        <button id="analyzeBtn" disabled>Analyze</button>
-        <a href="/" style="margin-left:8px" class="small-muted">Back</a>
+    <div class="welcome-box">
+        <h2 style="margin:0 0 8px 0">Ready to relive the chat?</h2>
+        <p style="margin:0;opacity:0.7">Pick a user and years to generate your story.</p>
+    </div>
+
+    <div class="card selection-card">
+        <div class="search-row-modern">
+            <input id="search" placeholder="Search for a friend..." class="modern-input">
+            <button id="refresh" class="icon-btn" title="Refresh list">🔄</button>
+            <a href="/" class="small-muted" style="margin-left:auto">Upload New</a>
         </div>
 
-        <!-- New: two selectors side-by-side -->
-        <div class="selectors">
-        <!-- left: username selector (unchanged behavior) -->
-        <div class="selector-col">
-            <div class="small-muted" style="margin-bottom:6px"><strong>Users</strong></div>
-            <div class="username-list" id="userList">Loading...</div>
-        </div>
+        <div class="selectors-grid">
+            <!-- Left: Users Grid -->
+            <div class="selector-section">
+                <div class="section-label">1. Choose who you are</div>
+                <div class="user-grid" id="userList">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
 
-        <!-- right: year selector implemented like the username selector (multi-select) -->
-        <div class="selector-col">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-            <div class="small-muted"><strong>Years</strong></div>
-            <div>
-                <button id="clearYears" title="Clear year selection" class="small-muted" style="background:none;border:0;cursor:pointer">Clear</button>
+            <!-- Right: Years & Action -->
+            <div class="selector-section sidebar">
+                <div class="section-label">
+                    2. Filter Years
+                    <button id="clearYears" class="tiny-btn">Reset</button>
+                </div>
+                <div class="year-badges" id="yearList">
+                    <div class="loading-spinner"></div>
+                </div>
+
+                <div class="action-area">
+                    <div class="selected-user-display" id="selectedUserDisplay">
+                        No user selected
+                    </div>
+                    <button id="analyzeBtn" class="analyze-fab" disabled>
+                        Generate Wrapped ✨
+                    </button>
+                </div>
             </div>
-            </div>
-            <div class="username-list" id="yearList">Loading...</div>
-            <div class="small-muted" style="margin-top:6px;font-size:12px">Click to toggle years (multi-select)</div>
-        </div>
         </div>
     </div>
   </div>
@@ -84,26 +97,47 @@
             </div>
         </div>
 
-        <!-- Slide 3: Timing -->
-        <div class="slide" id="slide-3">
-            <div class="slide-header">Timing</div>
+         <!-- Slide 3: The Ratio (New) -->
+         <div class="slide" id="slide-3">
+            <div class="slide-header">The Vibe</div>
             <div class="slide-body">
-                <h2 class="headline" id="timeHeadline">You have a rhythm.</h2>
-                <div class="big-stat">
-                    <span id="activeHour" class="highlight">00:00</span>
-                    <span class="label">Most Active Hour</span>
+                <h2 class="headline" id="ratioHeadline">Social Butterfly or Textrovert?</h2>
+                <div class="chart-container ratio-chart">
+                    <div class="bar-sent" id="barSent" style="width:50%">Sent</div>
+                    <div class="bar-recv" id="barRecv" style="width:50%">Received</div>
                 </div>
-                <div class="stat-box">
-                    <p>Your favorite day was <strong id="activeWeekday" class="accent-text">Monday</strong></p>
-                </div>
-                <div class="stat-row">
-                   Late night messages: <strong id="lateNightCount">0</strong>
+                <div class="stat-box mt-4">
+                    <p>You sent <strong id="ratioSent">0</strong> and received <strong id="ratioRecv">0</strong> messages.</p>
                 </div>
             </div>
         </div>
 
-        <!-- Slide 4: Habits -->
+        <!-- Slide 4: Timeline (New) -->
         <div class="slide" id="slide-4">
+            <div class="slide-header">Your Year</div>
+            <div class="slide-body">
+                <h2 class="headline">A year in messages.</h2>
+                <div id="monthlyChart" class="bar-chart"></div>
+                <div class="stat-box mt-4">
+                    <p>Most active month: <strong id="monthMost" class="accent-text">N/A</strong></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Daily Rhythm (New) -->
+        <div class="slide" id="slide-5">
+            <div class="slide-header">Daily Rhythm</div>
+            <div class="slide-body">
+                <h2 class="headline" id="timeHeadline">You have a rhythm.</h2>
+                <div id="hourlyChart" class="bar-chart-vertical"></div>
+                <div class="stat-row mt-4">
+                   Most active at <strong id="activeHour">00:00</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Habits -->
+        <div class="slide" id="slide-6">
             <div class="slide-header">Habits</div>
             <div class="slide-body">
                 <h2 class="headline">Consistency is key.</h2>
@@ -124,8 +158,8 @@
             </div>
         </div>
 
-        <!-- Slide 5: Emojis -->
-        <div class="slide" id="slide-5">
+        <!-- Slide 7: Emojis -->
+        <div class="slide" id="slide-7">
             <div class="slide-header">Expressions</div>
             <div class="slide-body centered">
                 <h2 class="headline">Your emotional support emoji</h2>
@@ -139,23 +173,8 @@
             </div>
         </div>
 
-        <!-- Slide 6: Voice -->
-        <div class="slide" id="slide-6">
-            <div class="slide-header">Voice</div>
-            <div class="slide-body">
-                <h2 class="headline">Mic check... 1, 2.</h2>
-                <div class="big-stat">
-                    <span id="voiceCount" class="highlight">0</span>
-                    <span class="label">Voice Notes</span>
-                </div>
-                <div class="stat-row">
-                    Totaling <strong id="voiceHours">0.0</strong> hours of talking.
-                </div>
-            </div>
-        </div>
-
-        <!-- Slide 7: Streaks -->
-        <div class="slide" id="slide-7">
+        <!-- Slide 8: Streaks -->
+        <div class="slide" id="slide-8">
             <div class="slide-header">Streaks & Peaks</div>
             <div class="slide-body">
                 <h2 class="headline">You couldn't stop talking!</h2>
@@ -171,8 +190,8 @@
             </div>
         </div>
 
-         <!-- Slide 8: Words -->
-         <div class="slide" id="slide-8">
+         <!-- Slide 9: Words -->
+         <div class="slide" id="slide-9">
             <div class="slide-header">Vocabulary</div>
             <div class="slide-body">
                 <h2 class="headline">What you talked about</h2>
@@ -183,8 +202,8 @@
             </div>
         </div>
 
-        <!-- Slide 9: Groups & Friends -->
-        <div class="slide" id="slide-9">
+        <!-- Slide 10: Groups & Friends -->
+        <div class="slide" id="slide-10">
             <div class="slide-header">The Crew</div>
             <div class="slide-body">
                 <h2 class="headline">Squad Goals</h2>
@@ -200,8 +219,8 @@
             </div>
         </div>
 
-        <!-- Slide 10: Summary -->
-        <div class="slide" id="slide-10">
+        <!-- Slide 11: Summary -->
+        <div class="slide" id="slide-11">
             <div class="slide-body centered">
                 <h1 class="animate-pop">That's a wrap!</h1>
                 <p>See you next year?</p>
@@ -225,6 +244,7 @@
         <div class="progress-bar"></div>
         <div class="progress-bar"></div>
         <div class="progress-bar"></div>
+        <div class="progress-bar"></div>
     </div>
   </div>
 
@@ -239,6 +259,7 @@
   const analyzeBtn = document.getElementById('analyzeBtn');
   const refreshBtn = document.getElementById('refresh');
   const selUserEl = document.getElementById('selUser');
+  const selUserDisplay = document.getElementById('selectedUserDisplay');
 
   // Story elements
   const selectionScreen = document.getElementById('selectionScreen');
@@ -251,7 +272,7 @@
   const selectedYears = new Set();
 
   function loadUsernames(){
-    userList.textContent = 'Loading...';
+    userList.innerHTML = '<div class="loading-spinner"></div>';
     fetch('/api/usernames').then(r=>r.json()).then(j=>{
       usernames = j.usernames || [];
       filtered = usernames.slice();
@@ -269,13 +290,15 @@
     userList.innerHTML = '';
     filtered.forEach(n=>{
       const div = document.createElement('div');
-      div.className = 'username-item';
+      div.className = 'user-card';
       div.textContent = n;
       div.onclick = ()=> {
-        document.querySelectorAll('#userList .username-item').forEach(el=>el.style.background='');
-        div.style.background='#eef6ff';
+        document.querySelectorAll('#userList .user-card').forEach(el=>el.classList.remove('selected'));
+        div.classList.add('selected');
         selected = n;
+        selUserDisplay.textContent = selected;
         analyzeBtn.disabled = false;
+        analyzeBtn.classList.add('ready');
       };
       userList.appendChild(div);
     });
@@ -289,7 +312,7 @@
 
   // populate yearList with clickable items (multi-select)
   function loadYears(){
-    yearList.textContent = 'Loading...';
+    yearList.innerHTML = '<div class="loading-spinner"></div>';
     fetch('/api/years').then(r=>r.json()).then(j=>{
       const years = j.years || [];
       if(years.length === 0){
@@ -299,17 +322,17 @@
       yearList.innerHTML = '';
       years.forEach(y=>{
         const div = document.createElement('div');
-        div.className = 'username-item year-item';
+        div.className = 'year-badge';
         div.textContent = y;
         div.dataset.year = y;
         div.onclick = ()=> {
           const year = div.dataset.year;
           if(selectedYears.has(year)){
             selectedYears.delete(year);
-            div.style.background = '';
+            div.classList.remove('selected');
           } else {
             selectedYears.add(year);
-            div.style.background = '#eef6ff';
+            div.classList.add('selected');
           }
         };
         yearList.appendChild(div);
@@ -321,7 +344,7 @@
 
   document.getElementById('clearYears').addEventListener('click', ()=>{
     selectedYears.clear();
-    document.querySelectorAll('#yearList .year-item').forEach(el=>el.style.background='');
+    document.querySelectorAll('#yearList .year-badge').forEach(el=>el.classList.remove('selected'));
   });
 
   analyzeBtn.addEventListener('click', ()=>{
@@ -336,7 +359,8 @@
     }
 
     // Show loading or disable button
-    analyzeBtn.textContent = "Crunching numbers...";
+    const origText = analyzeBtn.textContent;
+    analyzeBtn.textContent = "Crunching...";
     analyzeBtn.disabled = true;
 
     fetch('/api/stats?' + params.toString()).then(r=>r.json()).then(j=>{
@@ -349,12 +373,12 @@
       currentSlide = 0;
       updateSlide();
 
-      analyzeBtn.textContent = "Analyze";
+      analyzeBtn.textContent = origText;
       analyzeBtn.disabled = false;
 
     }).catch(e=>{
       alert('Failed to compute stats');
-      analyzeBtn.textContent = "Analyze";
+      analyzeBtn.textContent = origText;
       analyzeBtn.disabled = false;
       console.error(e);
     });
@@ -365,6 +389,65 @@
       document.getElementById('sentCount').textContent = j.total_messages_sent;
       document.getElementById('recvCount').textContent = j.total_messages_received;
       document.getElementById('chatsCount').textContent = j.total_chats_participated_in;
+
+      // New: Ratio
+      const total = j.total_messages_sent + j.total_messages_received;
+      if(total > 0){
+        const sentPct = Math.round((j.total_messages_sent / total) * 100);
+        document.getElementById('barSent').style.width = sentPct + '%';
+        document.getElementById('barRecv').style.width = (100 - sentPct) + '%';
+        document.getElementById('barSent').textContent = sentPct + '%';
+        document.getElementById('barRecv').textContent = (100 - sentPct) + '%';
+      }
+      document.getElementById('ratioSent').textContent = j.total_messages_sent;
+      document.getElementById('ratioRecv').textContent = j.total_messages_received;
+
+      // New: Monthly Chart
+      const mChart = document.getElementById('monthlyChart');
+      mChart.innerHTML = '';
+      const mDist = j.monthly_distribution || {};
+      const maxM = Math.max(...Object.values(mDist), 1);
+      const months = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+      months.forEach((mLabel, i)=>{
+          const idx = i+1;
+          const val = mDist[idx] || 0;
+          const bar = document.createElement('div');
+          bar.className = 'chart-bar';
+          bar.style.height = (val / maxM * 100) + '%';
+          bar.title = `${mLabel}: ${val}`;
+
+          const label = document.createElement('div');
+          label.className = 'chart-label';
+          label.textContent = mLabel;
+
+          const wrap = document.createElement('div');
+          wrap.className = 'chart-col';
+          wrap.appendChild(bar);
+          wrap.appendChild(label);
+          mChart.appendChild(wrap);
+      });
+
+      // New: Hourly Chart
+      const hChart = document.getElementById('hourlyChart');
+      hChart.innerHTML = '';
+      const hDist = j.hourly_distribution || {};
+      const maxH = Math.max(...Object.values(hDist), 1);
+      for(let h=0; h<24; h++){
+          const val = hDist[h] || 0;
+          const bar = document.createElement('div');
+          bar.className = 'chart-bar-v';
+          bar.style.width = (val / maxH * 100) + '%';
+
+          const label = document.createElement('div');
+          label.className = 'chart-label-v';
+          label.textContent = h;
+
+          const wrap = document.createElement('div');
+          wrap.className = 'chart-row-v';
+          wrap.appendChild(label);
+          wrap.appendChild(bar);
+          hChart.appendChild(wrap);
+      }
 
       // Reply stats
       document.getElementById('avgReply').textContent = j.overall_avg_reply_seconds ? (Math.round(j.overall_avg_reply_seconds)) + ' sec' : 'n/a';
@@ -386,9 +469,6 @@
           document.getElementById('timeHeadline').textContent = `You are a ${label} person.`;
       }
 
-      const weekdays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-      document.getElementById('activeWeekday').textContent = j.most_active_day_of_week !== null ? weekdays[j.most_active_day_of_week] : 'n/a';
-
       // Emoji
       const es = j.emoji_stats || {};
       if(es.most_used){
@@ -401,16 +481,7 @@
       const topEl = document.getElementById('topEmojis');
       topEl.textContent = (es.top_5 || []).slice(1).map(e=> `${e.emoji}`).join('  '); // Skip first as it's the main one
 
-      // Voice
-      const vs = j.voice_stats || {};
-      const secs = vs.voice_total_seconds || 0;
-      const hours = Math.round((secs/3600)*10)/10;
-      document.getElementById('voiceCount').textContent = vs.voice_messages_count || 0;
-      document.getElementById('voiceHours').textContent = hours;
-
       // Streaks
-      document.getElementById('lateNightCount').textContent = j.late_night_messages_count ?? 0;
-
       const ls = j.longest_daily_streak;
       if(ls){
         document.getElementById('longestStreak').textContent = ls.streak || 0;
@@ -423,6 +494,9 @@
 
       const bd = j.busiest_single_day;
       document.getElementById('busiestDay').textContent = bd ? `${bd.date} (${bd.count} msgs)` : 'n/a';
+
+      const mm = j.month_with_most_messages;
+      document.getElementById('monthMost').textContent = mm ? `${mm.month}` : 'n/a';
 
       // Word Cloud
       const ws = j.word_stats || {};
